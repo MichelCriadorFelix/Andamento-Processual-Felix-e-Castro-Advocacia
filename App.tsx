@@ -648,7 +648,14 @@ const App: React.FC = () => {
 
                   <div className="bg-white dark:bg-slate-800 shadow-xl overflow-hidden rounded border-t-4 border-red-900">
                     <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-                      <thead className="bg-slate-50 dark:bg-slate-700/50"><tr><th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase">Nome (Login)</th><th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase">PIN (Senha)</th><th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase">Ações</th></tr></thead>
+                      <thead className="bg-slate-50 dark:bg-slate-700/50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase">Nome (Login)</th>
+                          <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase">WhatsApp</th>
+                          <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase">PIN (Senha)</th>
+                          <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase">Ações</th>
+                        </tr>
+                      </thead>
                       <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
                         {currentClients.map(client => (
                           <tr key={client.id} className={client.archived ? 'bg-slate-50 dark:bg-slate-900 opacity-60' : ''}>
@@ -660,6 +667,16 @@ const App: React.FC = () => {
                                   onChange={e => setEditingClient({...editingClient, name: e.target.value})} 
                                 />
                               ) : client.name}
+                             </td>
+                             <td className="px-6 py-4 text-sm dark:text-slate-300">
+                               {editingClient?.id === client.id ? (
+                                <input 
+                                  className="border p-1 rounded w-full dark:bg-slate-700" 
+                                  value={editingClient.whatsapp || ''} 
+                                  onChange={e => setEditingClient({...editingClient, whatsapp: e.target.value})} 
+                                  placeholder="552199999999"
+                                />
+                              ) : client.whatsapp || '-'}
                              </td>
                              <td className="px-6 py-4 text-sm font-mono dark:text-slate-300">
                                {editingClient?.id === client.id ? (
