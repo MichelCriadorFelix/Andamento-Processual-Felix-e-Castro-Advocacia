@@ -2,13 +2,12 @@
 import { createClient } from '@supabase/supabase-js';
 
 // --- ÁREA DE CONFIGURAÇÃO DE EMERGÊNCIA ---
-// 1. A URL eu já peguei do seu print e preenchi abaixo.
-// 2. A chave "ANON": Volte na tela do Supabase, role um pouco para baixo,
-// procure por "Project API keys" e copie a chave "anon" "public".
-// Cole ela dentro das aspas vazias abaixo.
+// 1. A URL já está configurada (do seu print anterior).
+// 2. A chave ANON: No print que você mandou agora, copie o valor do campo "Chave publicável".
+//    Cole esse código longo dentro das aspas abaixo em MANUAL_SUPABASE_ANON_KEY.
 
 const MANUAL_SUPABASE_URL = "https://ysdaithcdnmqvvfwrhit.supabase.co"; 
-const MANUAL_SUPABASE_ANON_KEY = ""; // <--- COLE A CHAVE 'anon public' AQUI DENTRO
+const MANUAL_SUPABASE_ANON_KEY = ""; // <--- COLE A CHAVE 'publicável' AQUI DENTRO (Começa com eyJ... ou sb_publishable...)
 
 // Tenta obter as variáveis de ambiente de diferentes fontes
 const getEnv = (key: string) => {
