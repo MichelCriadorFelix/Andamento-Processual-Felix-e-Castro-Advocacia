@@ -50,15 +50,17 @@
 {
   "imports": {
     "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
     "react/": "https://esm.sh/react@^19.2.4/",
     "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.93.2"
   }
 }
 </script>
 </head>
   <body>
     <div id="root"></div>
+    <!-- Script de Entrada Obrigatório para o React/Vite iniciar -->
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>
