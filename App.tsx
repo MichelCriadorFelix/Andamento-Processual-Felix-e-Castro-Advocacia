@@ -7,7 +7,7 @@ import { isSupabaseConfigured } from './lib/supabase';
 import { Timeline } from './components/Timeline';
 import { StepModal } from './components/StepModal';
 import { FloatingSupport } from './components/FloatingSupport';
-import { Scale, LogOut, User as UserIcon, FileText, Briefcase, Users, PlusCircle, Moon, Sun, MessageCircle, Gavel, CheckCheck, ArrowRightLeft, Edit, Trash2, Archive, ChevronLeft, ChevronRight, Search, Lock, Unlock, Settings, List, Plus, X, MoreVertical, Wifi, WifiOff, RefreshCw } from 'lucide-react';
+import { Scale, LogOut, User as UserIcon, FileText, Briefcase, Users, PlusCircle, Moon, Sun, MessageCircle, Gavel, CheckCheck, ArrowRightLeft, Edit, Trash2, Archive, ChevronLeft, ChevronRight, Search, Lock, Unlock, Settings, List, Plus, X, MoreVertical, Wifi, WifiOff, RefreshCw, Globe } from 'lucide-react';
 import { PREVIDENCIARIO_BENEFITS } from './constants';
 
 const api = isSupabaseConfigured ? supabaseService : mockService;
@@ -350,7 +350,7 @@ const App: React.FC = () => {
                     </div>
                  ) : (
                     <div className="flex items-center gap-1 bg-amber-100 text-amber-800 px-2 py-1 rounded-full text-[10px] font-bold border border-amber-200" title="Usando Memória Local (Não Sincronizado)">
-                      <WifiOff className="w-3 h-3" /> Modo Local
+                      <WifiOff className="w-3 h-3" /> Local
                     </div>
                  )}
               </div>
@@ -365,9 +365,11 @@ const App: React.FC = () => {
                 {error && <p className="text-red-600 text-sm text-center bg-red-50 p-2 rounded border border-red-200">{error}</p>}
                 
                 {!isSupabaseConfigured && (
-                  <p className="text-[10px] text-amber-600 text-center bg-amber-50 p-2 rounded border border-amber-200">
-                    Aviso: O sistema não detectou a conexão com o banco de dados. As contas criadas aqui ficarão salvas apenas neste dispositivo.
-                  </p>
+                  <div className="text-[10px] text-amber-700 bg-amber-50 p-2 rounded border border-amber-200 text-center">
+                    <p className="font-bold mb-1"><WifiOff className="w-3 h-3 inline mr-1"/> Modo Local Ativado</p>
+                    <p>Você não está conectado ao banco de dados.</p>
+                    <p className="mt-1">As contas que você criar agora <strong>não serão visíveis</strong> para os outros advogados.</p>
+                  </div>
                 )}
 
                 <button className="w-full bg-red-950 dark:bg-red-900 text-white py-4 font-bold uppercase tracking-wider hover:bg-red-900 transition-all">{isRegistering ? 'Cadastrar' : 'Entrar'}</button>
@@ -426,10 +428,24 @@ const App: React.FC = () => {
                 <div className="space-y-10 animate-fade-in">
                   
                   {!isSupabaseConfigured && currentUser.role === 'ADMIN' && (
-                    <div className="bg-amber-100 border-l-4 border-amber-500 text-amber-900 p-4 mb-4 rounded shadow-sm">
-                      <p className="font-bold">⚠️ Atenção: Modo Local Ativado</p>
-                      <p className="text-sm">O aplicativo não está conectado ao banco de dados Supabase. As alterações feitas aqui (criar clientes, processos, etc.) só serão visíveis neste computador e não aparecerão para os outros advogados.</p>
-                      <p className="text-xs mt-2 text-amber-700">Solução: Verifique as variáveis de ambiente na Vercel (VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY).</p>
+                    <div className="bg-amber-100 border-l-4 border-amber-500 text-amber-900 p-6 mb-8 rounded-r shadow-md flex items-start gap-4">
+                      <div className="bg-amber-200 p-3 rounded-full"><WifiOff className="w-8 h-8 text-amber-700" /></div>
+                      <div>
+                        <h3 className="font-bold text-lg mb-1">Atenção: Acesso Universal Desativado</h3>
+                        <p className="text-sm mb-2">
+                          O aplicativo não conseguiu se conectar ao banco de dados (Supabase).
+                          No momento, ele está salvando os dados <strong>apenas neste computador</strong>.
+                        </p>
+                        <p className="text-sm font-medium mb-3">
+                          Isso explica por que o que o Michel cria não aparece para a Luana ou Fabrícia.
+                        </p>
+                        <div className="bg-white/50 p-3 rounded border border-amber-300 text-xs font-mono text-amber-800">
+                          <p className="font-bold text-amber-900 mb-1">COMO RESOLVER:</p>
+                          <p>1. Pegue a URL e a ANON_KEY no painel do Supabase.</p>
+                          <p>2. Adicione-as nas "Environment Variables" da Vercel.</p>
+                          <p>3. OU (Solução Rápida): Cole as chaves no arquivo <code>lib/supabase.ts</code> nas variáveis <code>MANUAL_SUPABASE...</code></p>
+                        </div>
+                      </div>
                     </div>
                   )}
 
