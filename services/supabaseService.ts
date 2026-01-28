@@ -117,7 +117,15 @@ export const supabaseService = {
 
   createTemplate: async (label: string) => {
     if (!supabase) return;
-    const { data, error } = await supabase.from('templates').insert([{ label, is_system: false }]).select().single();
+    // Fix: Gera um ID único manualmente pois a tabela de templates não tem default (para permitir IDs de sistema textuais)
+    const newId = `custom-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+    
+    const { data, error } = await supabase.from('templates').insert([{ 
+      id: newId,
+      label, 
+      is_system: false 
+    }]).select().single();
+    
     if (error) throw error;
     return { id: data.id, label: data.label, steps: [], isSystem: false };
   },
