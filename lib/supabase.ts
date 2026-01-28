@@ -2,14 +2,13 @@
 import { createClient } from '@supabase/supabase-js';
 
 // --- ÁREA DE CONFIGURAÇÃO DE EMERGÊNCIA ---
-// 1. A URL já está configurada (do seu print anterior).
-// 2. A chave ANON: No print que você mandou agora, copie o valor do campo "Chave publicável".
-//    Cole esse código longo dentro das aspas abaixo em MANUAL_SUPABASE_ANON_KEY.
+// 1. URL do Projeto (Configurada)
+// 2. Chave Publicável (Configurada manualmente abaixo)
 
 const MANUAL_SUPABASE_URL = "https://ysdaithcdnmqvvfwrhit.supabase.co"; 
-const MANUAL_SUPABASE_ANON_KEY = ""; // <--- COLE A CHAVE 'publicável' AQUI DENTRO (Começa com eyJ... ou sb_publishable...)
+const MANUAL_SUPABASE_ANON_KEY = "sb_publishable_a4LJwyRVaCWUoBAhH3tm6Q_hhehoJha"; // Chave de API Configurada
 
-// Tenta obter as variáveis de ambiente de diferentes fontes
+// Tenta obter as variáveis de ambiente de diferentes fontes (Prioridade: Manual > Vite > Next.js)
 const getEnv = (key: string) => {
   // @ts-ignore
   if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
@@ -24,7 +23,6 @@ const getEnv = (key: string) => {
   return '';
 };
 
-// A lógica agora é: 1. Tenta chaves manuais -> 2. Tenta chaves da Vercel (Vite) -> 3. Tenta chaves Next.js
 const supabaseUrl = MANUAL_SUPABASE_URL || getEnv('VITE_SUPABASE_URL') || getEnv('NEXT_PUBLIC_SUPABASE_URL');
 const supabaseAnonKey = MANUAL_SUPABASE_ANON_KEY || getEnv('VITE_SUPABASE_ANON_KEY') || getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY');
 
