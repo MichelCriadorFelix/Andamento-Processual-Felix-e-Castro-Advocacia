@@ -3,8 +3,12 @@ import { BenefitType, CaseTemplate } from './types';
 
 export const ADMIN_NAMES = [
   'Michel Felix',
+  'Michel Felix Criador',
   'Luana Castro', 
-  'Fabrícia Sousa'
+  'Fabrícia Sousa',
+  'Fabricia Sousa', // Variação sem acento
+  'Admin',
+  'Suporte'
 ];
 
 // Configuração dos Benefícios
@@ -102,6 +106,12 @@ export const INITIAL_TEMPLATES: CaseTemplate[] = [
       { id: 't5-7', label: 'Fase Recursal', expectedDuration: 30, stepOrder: 6 },
       { id: 't5-8', label: 'Execução / Cumprimento', expectedDuration: 60, stepOrder: 7 }
     ]
+  },
+  {
+    id: 'CLIENTE_EXEMPLO',
+    label: 'Cliente Exemplo (Demo)',
+    isSystem: false,
+    steps: []
   }
 ];
 

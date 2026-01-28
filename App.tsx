@@ -7,7 +7,7 @@ import { isSupabaseConfigured } from './lib/supabase';
 import { Timeline } from './components/Timeline';
 import { StepModal } from './components/StepModal';
 import { FloatingSupport } from './components/FloatingSupport';
-import { Scale, LogOut, User as UserIcon, FileText, Briefcase, Users, PlusCircle, Moon, Sun, MessageCircle, Gavel, CheckCheck, ArrowRightLeft, Edit, Trash2, Archive, ChevronLeft, ChevronRight, Search, Lock, Unlock, Settings, List, Plus, X, MoreVertical } from 'lucide-react';
+import { Scale, LogOut, User as UserIcon, FileText, Briefcase, Users, PlusCircle, Moon, Sun, MessageCircle, Gavel, CheckCheck, ArrowRightLeft, Edit, Trash2, Archive, ChevronLeft, ChevronRight, Search, Lock, Unlock, Settings, List, Plus, X, MoreVertical, Wifi, WifiOff, RefreshCw } from 'lucide-react';
 import { PREVIDENCIARIO_BENEFITS } from './constants';
 
 const api = isSupabaseConfigured ? supabaseService : mockService;
@@ -79,37 +79,45 @@ const App: React.FC = () => {
     const loadData = async () => {
       if (!currentUser) return;
 
-      // Sempre carrega templates
-      const allTemplates = await (api as any).getTemplates();
-      setTemplates(allTemplates);
-      if (allTemplates.length > 0 && !newCaseTemplateId) {
-        setNewCaseTemplateId(allTemplates[0].id);
-      }
-
-      if (currentUser.role === 'ADMIN') {
-        const allCases = await api.getAllCases();
-        const allClients = await api.getAllClients();
-        setCases(allCases);
-        setClients(allClients);
-
-        // SYNC ACTIVE CASE: Se houver um caso aberto, atualiza ele com os dados novos vindos do banco
-        if (activeCase) {
-          const updatedActiveCase = allCases.find(c => c.id === activeCase.id);
-          if (updatedActiveCase) {
-            setActiveCase(updatedActiveCase);
-          }
+      try {
+        // Sempre carrega templates
+        const allTemplates = await (api as any).getTemplates();
+        setTemplates(allTemplates);
+        if (allTemplates.length > 0 && !newCaseTemplateId) {
+          setNewCaseTemplateId(allTemplates[0].id);
         }
 
-      } else {
-        const myCases = await api.getCasesByClient(currentUser.id);
-        setCases(myCases);
+        if (currentUser.role === 'ADMIN') {
+          const allCases = await api.getAllCases();
+          const allClients = await api.getAllClients();
+          setCases(allCases);
+          setClients(allClients);
+
+          // SYNC ACTIVE CASE: Se houver um caso aberto, atualiza ele com os dados novos vindos do banco
+          if (activeCase) {
+            const updatedActiveCase = allCases.find(c => c.id === activeCase.id);
+            if (updatedActiveCase) {
+              setActiveCase(updatedActiveCase);
+            }
+          }
+
+        } else {
+          const myCases = await api.getCasesByClient(currentUser.id);
+          setCases(myCases);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar dados:", error);
       }
     };
     loadData();
-  }, [currentUser, refreshKey, view]); // Remove activeCase from dependency to avoid loop, handled inside logic
+  }, [currentUser, refreshKey, view]); 
 
   const toggleTheme = () => {
     setDarkMode(!darkMode);
+  };
+
+  const handleManualRefresh = () => {
+    setRefreshKey(prev => prev + 1);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -332,14 +340,36 @@ const App: React.FC = () => {
 
         {!currentUser ? (
           <div className="min-h-screen flex items-center justify-center p-4">
-             <div className="bg-white dark:bg-slate-800 p-8 rounded-none shadow-2xl max-w-md w-full border-t-8 border-red-950 dark:border-red-800 animate-fade-in transition-colors duration-300">
+             <div className="bg-white dark:bg-slate-800 p-8 rounded-none shadow-2xl max-w-md w-full border-t-8 border-red-950 dark:border-red-800 animate-fade-in transition-colors duration-300 relative">
+              
+              {/* STATUS INDICATOR (LOGIN SCREEN) */}
+              <div className="absolute top-2 right-2">
+                 {isSupabaseConfigured ? (
+                    <div className="flex items-center gap-1 bg-green-100 text-green-800 px-2 py-1 rounded-full text-[10px] font-bold border border-green-200" title="Banco de Dados Conectado">
+                      <Wifi className="w-3 h-3" /> Online
+                    </div>
+                 ) : (
+                    <div className="flex items-center gap-1 bg-amber-100 text-amber-800 px-2 py-1 rounded-full text-[10px] font-bold border border-amber-200" title="Usando Memória Local (Não Sincronizado)">
+                      <WifiOff className="w-3 h-3" /> Modo Local
+                    </div>
+                 )}
+              </div>
+
               <div className="flex justify-center mb-6"><div className="bg-red-950 dark:bg-red-900 p-4 rounded-full shadow-lg"><Scale className="text-white w-10 h-10" /></div></div>
               <h1 className="text-3xl font-serif text-center text-red-950 dark:text-red-100 mb-1">Felix e Castro</h1>
               <h2 className="text-xs font-bold text-center text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-8">{isRegistering ? 'Criar Nova Conta' : 'Acesso Restrito'}</h2>
+              
               <form onSubmit={handleSubmit} className="space-y-6">
                 <input type="text" placeholder="Nome Completo" className="w-full border-b-2 border-slate-300 dark:border-slate-600 bg-transparent p-2 dark:text-white outline-none focus:border-red-900" value={identifier} onChange={e => setIdentifier(e.target.value)} />
                 <input type="password" placeholder="PIN" className="w-full border-b-2 border-slate-300 dark:border-slate-600 bg-transparent p-2 dark:text-white outline-none focus:border-red-900" value={pin} onChange={e => setPin(e.target.value)} maxLength={6} />
-                {error && <p className="text-red-600 text-sm text-center">{error}</p>}
+                {error && <p className="text-red-600 text-sm text-center bg-red-50 p-2 rounded border border-red-200">{error}</p>}
+                
+                {!isSupabaseConfigured && (
+                  <p className="text-[10px] text-amber-600 text-center bg-amber-50 p-2 rounded border border-amber-200">
+                    Aviso: O sistema não detectou a conexão com o banco de dados. As contas criadas aqui ficarão salvas apenas neste dispositivo.
+                  </p>
+                )}
+
                 <button className="w-full bg-red-950 dark:bg-red-900 text-white py-4 font-bold uppercase tracking-wider hover:bg-red-900 transition-all">{isRegistering ? 'Cadastrar' : 'Entrar'}</button>
               </form>
               <div className="mt-8 text-center pt-6 border-t dark:border-slate-700">
@@ -354,11 +384,29 @@ const App: React.FC = () => {
                 <div className="flex items-center justify-between h-20">
                   <div className="flex items-center space-x-4 cursor-pointer group" onClick={() => setView('DASHBOARD')}>
                      <div className="bg-white/10 p-2 rounded-full"><Scale className="text-white w-6 h-6" /></div>
-                     <div className="flex flex-col"><span className="font-serif text-xl tracking-wide">Felix e Castro</span><span className="text-[10px] uppercase text-red-200">Advocacia</span></div>
+                     <div className="flex flex-col">
+                       <span className="font-serif text-xl tracking-wide">Felix e Castro</span>
+                       <div className="flex items-center gap-2">
+                         <span className="text-[10px] uppercase text-red-200">Advocacia</span>
+                         {/* Status Indicator in Navbar */}
+                         {isSupabaseConfigured ? (
+                            <span className="flex items-center gap-0.5 bg-green-500/20 text-green-200 px-1.5 py-0.5 rounded text-[8px] font-bold border border-green-500/30 uppercase tracking-wide">
+                              <Wifi className="w-2 h-2" /> Online
+                            </span>
+                         ) : (
+                            <span className="flex items-center gap-0.5 bg-amber-500/20 text-amber-200 px-1.5 py-0.5 rounded text-[8px] font-bold border border-amber-500/30 uppercase tracking-wide">
+                              <WifiOff className="w-2 h-2" /> Local
+                            </span>
+                         )}
+                       </div>
+                     </div>
                   </div>
-                  <div className="flex items-center space-x-6 mr-8">
+                  <div className="flex items-center space-x-4 md:space-x-6 mr-8">
                     {currentUser.role === 'ADMIN' && (
                        <>
+                         <button onClick={handleManualRefresh} className="p-2 text-red-200 hover:text-white hover:bg-red-900 rounded-full" title="Atualizar Dados">
+                            <RefreshCw className="w-4 h-4" />
+                         </button>
                          <button onClick={() => setView('CLIENT_MANAGER')} className="hidden md:flex items-center space-x-2 px-3 py-1.5 bg-red-900/50 hover:bg-red-900 rounded text-sm border border-red-800">
                            <Users className="w-4 h-4" /><span>Clientes</span>
                          </button>
@@ -376,6 +424,15 @@ const App: React.FC = () => {
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
               {view === 'DASHBOARD' && (
                 <div className="space-y-10 animate-fade-in">
+                  
+                  {!isSupabaseConfigured && currentUser.role === 'ADMIN' && (
+                    <div className="bg-amber-100 border-l-4 border-amber-500 text-amber-900 p-4 mb-4 rounded shadow-sm">
+                      <p className="font-bold">⚠️ Atenção: Modo Local Ativado</p>
+                      <p className="text-sm">O aplicativo não está conectado ao banco de dados Supabase. As alterações feitas aqui (criar clientes, processos, etc.) só serão visíveis neste computador e não aparecerão para os outros advogados.</p>
+                      <p className="text-xs mt-2 text-amber-700">Solução: Verifique as variáveis de ambiente na Vercel (VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY).</p>
+                    </div>
+                  )}
+
                   {currentUser.role === 'ADMIN' && (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                       {/* Novo Cliente */}
@@ -560,7 +617,7 @@ const App: React.FC = () => {
                 </div>
               )}
 
-              {/* ... (CLIENT MANAGER view - mantido igual) ... */}
+              {/* ... (CLIENT MANAGER view) ... */}
                {view === 'CLIENT_MANAGER' && currentUser.role === 'ADMIN' && (
                 <div className="animate-fade-in space-y-6">
                   <div className="flex justify-between items-center">
@@ -617,7 +674,7 @@ const App: React.FC = () => {
                 </div>
               )}
 
-              {/* ... (CASE DETAIL view - atualizado para ler activeCase.type como Template ID ou String) ... */}
+              {/* ... (CASE DETAIL view) ... */}
               {view === 'CASE_DETAIL' && activeCase && (
                 <div className="animate-fade-in pb-20">
                   <button onClick={() => setView('DASHBOARD')} className="mb-8 text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-red-900 flex items-center uppercase tracking-wider"><ChevronLeft className="w-4 h-4 mr-1" /> Voltar</button>
