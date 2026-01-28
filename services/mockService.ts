@@ -56,8 +56,8 @@ export const mockService = {
     return { user: newUser };
   },
 
-  createUser: async (name: string, pin: string, role: 'CLIENT' | 'ADMIN', whatsapp?: string) => {
-    const newUser: User = { id: `u-${Date.now()}`, name, pin, role, whatsapp, archived: false };
+  createUser: async (name: string, pin: string, role: 'CLIENT' | 'ADMIN', whatsapp?: string, jobTitle?: string) => {
+    const newUser: User = { id: `u-${Date.now()}`, name, pin, role, whatsapp, jobTitle, archived: false };
     users = [...users, newUser];
     setStored(STORAGE_KEYS.USERS, users);
     return newUser;
@@ -157,7 +157,7 @@ export const mockService = {
     });
   },
 
-  addCase: (clientId: string, templateId: string, title: string, benefitType?: BenefitType) => {
+  addCase: (clientId: string, templateId: string, title: string, benefitType?: BenefitType, responsibleLawyer?: string) => {
     const template = templates.find(t => t.id === templateId);
     if (!template) throw new Error("Template not found");
 
@@ -167,6 +167,7 @@ export const mockService = {
       type: templateId, 
       benefitType,
       title,
+      responsibleLawyer,
       startDate: new Date().toISOString().split('T')[0],
       status: 'ACTIVE',
       steps: template.steps.map((s, idx) => ({
@@ -263,6 +264,7 @@ export const mockService = {
       type: targetTemplate.id,
       benefitType: oldCase.benefitType,
       title: `Judicial: ${oldCase.title}`,
+      responsibleLawyer: oldCase.responsibleLawyer,
       startDate: new Date().toISOString().split('T')[0],
       status: 'ACTIVE',
       steps: targetTemplate.steps.map((s, idx) => ({

@@ -7,7 +7,7 @@ import { isSupabaseConfigured } from './lib/supabase';
 import { Timeline } from './components/Timeline';
 import { StepModal } from './components/StepModal';
 import { FloatingSupport } from './components/FloatingSupport';
-import { Scale, LogOut, User as UserIcon, FileText, Briefcase, Users, PlusCircle, Moon, Sun, MessageCircle, Gavel, CheckCheck, ArrowRightLeft, Edit, Trash2, Archive, ChevronLeft, ChevronRight, Search, Lock, Unlock, Settings, List, Plus, X, MoreVertical, Wifi, WifiOff, RefreshCw, Globe } from 'lucide-react';
+import { Scale, LogOut, User as UserIcon, FileText, Briefcase, Users, PlusCircle, Moon, Sun, MessageCircle, Gavel, CheckCheck, ArrowRightLeft, Edit, Trash2, Archive, ChevronLeft, ChevronRight, Search, Lock, Unlock, Settings, List, Plus, X, MoreVertical, Wifi, WifiOff, RefreshCw, Globe, BriefcaseIcon } from 'lucide-react';
 import { PREVIDENCIARIO_BENEFITS } from './constants';
 
 const api = isSupabaseConfigured ? supabaseService : mockService;
@@ -35,16 +35,24 @@ const App: React.FC = () => {
   const [error, setError] = useState('');
 
   // Dashboard Actions State
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  // New Client
   const [newClientName, setNewClientName] = useState('');
   const [newClientPin, setNewClientPin] = useState('');
   const [newClientWhatsapp, setNewClientWhatsapp] = useState(''); 
+  
+  // New Admin
   const [newAdminName, setNewAdminName] = useState('');
   const [newAdminPin, setNewAdminPin] = useState('');
+  const [newAdminJobTitle, setNewAdminJobTitle] = useState('Advogado(a)');
 
+  // New Case
   const [selectedClientId, setSelectedClientId] = useState('');
   const [newCaseTemplateId, setNewCaseTemplateId] = useState<string>('');
   const [newBenefitType, setNewBenefitType] = useState<BenefitType | ''>(''); 
   const [newCaseTitle, setNewCaseTitle] = useState('');
+  const [newCaseResponsibleLawyer, setNewCaseResponsibleLawyer] = useState('');
   
   // Template Manager State
   const [newTemplateName, setNewTemplateName] = useState('');
@@ -92,6 +100,11 @@ const App: React.FC = () => {
           const allClients = await api.getAllClients();
           setCases(allCases);
           setClients(allClients);
+
+          // Default responsible lawyer to current user if empty
+          if (!newCaseResponsibleLawyer) {
+             setNewCaseResponsibleLawyer(currentUser.name);
+          }
 
           // SYNC ACTIVE CASE: Se houver um caso aberto, atualiza ele com os dados novos vindos do banco
           if (activeCase) {
@@ -155,12 +168,19 @@ const App: React.FC = () => {
   const handleCreateUser = async (name: string, userPin: string, role: 'CLIENT' | 'ADMIN') => {
     if (name && userPin) {
       try {
-        await (api as any).createUser(name, userPin, role, role === 'CLIENT' ? newClientWhatsapp : undefined);
+        await (api as any).createUser(
+          name, 
+          userPin, 
+          role, 
+          role === 'CLIENT' ? newClientWhatsapp : undefined,
+          role === 'ADMIN' ? newAdminJobTitle : undefined
+        );
+
         if (role === 'CLIENT') {
             setNewClientName(''); setNewClientPin(''); setNewClientWhatsapp('');
             alert('Cliente adicionado!');
         } else {
-            setNewAdminName(''); setNewAdminPin('');
+            setNewAdminName(''); setNewAdminPin(''); setNewAdminJobTitle('Advogado(a)');
             alert('Membro da equipe adicionado!');
         }
         setRefreshKey(k => k + 1);
@@ -176,7 +196,7 @@ const App: React.FC = () => {
           return;
         }
         // @ts-ignore
-        await api.addCase(selectedClientId, newCaseTemplateId, newCaseTitle, newBenefitType as BenefitType);
+        await api.addCase(selectedClientId, newCaseTemplateId, newCaseTitle, newBenefitType as BenefitType, newCaseResponsibleLawyer);
         setNewCaseTitle(''); setSelectedClientId(''); setNewBenefitType('');
         setRefreshKey(k => k + 1);
         alert('Processo criado!');
@@ -326,6 +346,16 @@ const App: React.FC = () => {
     }
   };
   
+  // Filtering Cases for Dashboard
+  const filteredCases = cases.filter(c => {
+    const search = searchTerm.toLowerCase();
+    const matchesTitle = c.title.toLowerCase().includes(search);
+    const matchesClient = (c as any).clientName?.toLowerCase().includes(search);
+    const matchesLawyer = c.responsibleLawyer?.toLowerCase().includes(search);
+    const matchesStatus = c.status?.toLowerCase().includes(search);
+    return matchesTitle || matchesClient || matchesLawyer || matchesStatus;
+  });
+
   // Client Pagination
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -480,6 +510,10 @@ const App: React.FC = () => {
                              </select>
                           )}
                           <input className="w-full border-b bg-slate-50 dark:bg-slate-700/50 p-3 text-sm dark:text-white outline-none" placeholder="Título do Processo" value={newCaseTitle} onChange={e => setNewCaseTitle(e.target.value)} />
+                          
+                          {/* Novo Campo: Advogado Responsável */}
+                          <input className="w-full border-b bg-slate-50 dark:bg-slate-700/50 p-3 text-sm dark:text-white outline-none" placeholder="Advogado Responsável" value={newCaseResponsibleLawyer} onChange={e => setNewCaseResponsibleLawyer(e.target.value)} />
+
                           <button onClick={handleAddCase} className="w-full bg-slate-800 text-white py-3 text-xs font-bold uppercase hover:bg-slate-900 mt-2">Iniciar Processo</button>
                         </div>
                       </div>
@@ -489,8 +523,23 @@ const App: React.FC = () => {
                         <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300 mb-6 flex items-center"><Users className="w-5 h-5 mr-2" /> Equipe</h3>
                         <div className="space-y-4 opacity-75 hover:opacity-100">
                            <input className="w-full border p-2 text-sm rounded bg-white dark:bg-slate-700 dark:text-white" placeholder="Nome" value={newAdminName} onChange={e => setNewAdminName(e.target.value)} />
+                           
+                           {/* Novo Seletor: Cargo/Função */}
+                           <select 
+                             className="w-full border p-2 text-sm rounded bg-white dark:bg-slate-700 dark:text-white"
+                             value={newAdminJobTitle}
+                             onChange={e => setNewAdminJobTitle(e.target.value)}
+                           >
+                             <option value="Advogado(a)">Advogado(a)</option>
+                             <option value="Secretário(a)">Secretário(a)</option>
+                             <option value="Estagiário(a)">Estagiário(a)</option>
+                             <option value="Paralegal">Paralegal</option>
+                             <option value="Financeiro">Financeiro</option>
+                             <option value="Outro">Outro</option>
+                           </select>
+
                            <input className="w-full border p-2 text-sm rounded bg-white dark:bg-slate-700 dark:text-white" placeholder="PIN" value={newAdminPin} onChange={e => setNewAdminPin(e.target.value)} maxLength={6} />
-                          <button onClick={() => handleCreateUser(newAdminName, newAdminPin, 'ADMIN')} className="w-full bg-slate-400 text-white py-2 text-xs font-bold uppercase hover:bg-slate-500 rounded">Criar Admin</button>
+                          <button onClick={() => handleCreateUser(newAdminName, newAdminPin, 'ADMIN')} className="w-full bg-slate-400 text-white py-2 text-xs font-bold uppercase hover:bg-slate-500 rounded">Criar Membro</button>
                         </div>
                       </div>
                     </div>
@@ -498,11 +547,37 @@ const App: React.FC = () => {
 
                   {/* Lista de Processos */}
                   <div>
-                    <h2 className="text-3xl font-serif text-red-950 dark:text-red-100 mb-8 border-l-4 border-red-950 pl-4">Andamentos</h2>
+                    <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-8 gap-4 border-l-4 border-red-950 pl-4">
+                       <h2 className="text-3xl font-serif text-red-950 dark:text-red-100">Andamentos</h2>
+                       
+                       {/* Barra de Busca */}
+                       <div className="relative w-full md:w-96">
+                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                           <Search className="h-5 w-5 text-slate-400" />
+                         </div>
+                         <input
+                           type="text"
+                           className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-md leading-5 bg-white dark:bg-slate-800 dark:border-slate-700 placeholder-slate-500 focus:outline-none focus:placeholder-slate-400 focus:ring-1 focus:ring-red-900 focus:border-red-900 sm:text-sm dark:text-white"
+                           placeholder="Buscar por cliente, processo ou advogado..."
+                           value={searchTerm}
+                           onChange={(e) => setSearchTerm(e.target.value)}
+                         />
+                       </div>
+                    </div>
+
                     <div className="bg-white dark:bg-slate-800 shadow-lg overflow-hidden border-t border-slate-200">
-                       {cases.length === 0 ? <div className="p-12 text-center text-slate-500"><Briefcase className="w-12 h-12 mx-auto mb-4 text-slate-300" />Nenhum processo localizado.</div> : (
+                       {filteredCases.length === 0 ? (
+                         <div className="p-12 text-center text-slate-500">
+                            {searchTerm ? 'Nenhum resultado encontrado para sua busca.' : (
+                              <>
+                                <Briefcase className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+                                Nenhum processo localizado.
+                              </>
+                            )}
+                         </div> 
+                       ) : (
                          <ul className="divide-y divide-slate-100 dark:divide-slate-700">
-                           {cases.map(c => {
+                           {filteredCases.map(c => {
                              const template = templates.find(t => t.id === c.type);
                              return (
                                <li key={c.id} className="p-6 hover:bg-red-50 dark:hover:bg-slate-700 transition-colors group">
@@ -512,10 +587,11 @@ const App: React.FC = () => {
                                        <h4 className="text-xl font-medium text-slate-800 dark:text-slate-200 group-hover:text-red-900">{c.title}</h4>
                                        {renderStatusBadge(c.status || 'ACTIVE')}
                                      </div>
-                                     <p className="text-sm text-slate-500 mt-2 flex items-center">
-                                       {(c as any).clientName && <span className="font-bold mr-2 text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">{(c as any).clientName}</span>}
-                                       <span className="text-xs uppercase tracking-wide">{template?.label || c.type}</span>
-                                     </p>
+                                     <div className="flex flex-col md:flex-row md:items-center gap-2 mt-2">
+                                        {(c as any).clientName && <span className="text-sm font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-600">Cliente: {(c as any).clientName}</span>}
+                                        {c.responsibleLawyer && <span className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-1 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-100 dark:border-slate-700"><BriefcaseIcon className="w-3 h-3"/> Adv: {c.responsibleLawyer}</span>}
+                                        <span className="text-xs text-slate-400 uppercase tracking-wide">{template?.label || c.type}</span>
+                                     </div>
                                    </div>
                                    {currentUser.role === 'ADMIN' && (
                                      <div className="flex items-center gap-2">
@@ -716,11 +792,18 @@ const App: React.FC = () => {
                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                          <div>
                             <h1 className="text-3xl md:text-4xl font-serif text-red-950 dark:text-red-100 mb-2">{activeCase.title}</h1>
-                            <p className="text-slate-500 dark:text-slate-400 font-medium">
-                              {/* Busca nome do template */}
-                              {templates.find(t => t.id === activeCase.type)?.label || activeCase.type}
-                              {activeCase.benefitType && ` - ${PREVIDENCIARIO_BENEFITS[activeCase.benefitType].label}`}
-                            </p>
+                            <div className="space-y-1">
+                              <p className="text-slate-500 dark:text-slate-400 font-medium">
+                                {templates.find(t => t.id === activeCase.type)?.label || activeCase.type}
+                                {activeCase.benefitType && ` - ${PREVIDENCIARIO_BENEFITS[activeCase.benefitType].label}`}
+                              </p>
+                              {activeCase.responsibleLawyer && (
+                                <p className="text-sm text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                                  <BriefcaseIcon className="w-3 h-3 text-red-900"/>
+                                  Advogado(a) Responsável: <span className="font-bold">{activeCase.responsibleLawyer}</span>
+                                </p>
+                              )}
+                            </div>
                          </div>
                          {renderStatusBadge(activeCase.status || 'ACTIVE')}
                        </div>

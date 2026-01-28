@@ -29,6 +29,7 @@ export interface User {
   pin?: string; 
   email?: string;
   whatsapp?: string;
+  jobTitle?: string; // Novo: Cargo (Advogado, Secretária, etc)
   archived?: boolean;
 }
 
@@ -50,9 +51,11 @@ export interface LegalCase {
   templateId?: string; // Referência direta ao template
   benefitType?: BenefitType;
   title: string;
+  responsibleLawyer?: string; // Novo: Advogado Responsável
   startDate: string;
   status: CaseStatus;
   steps: Step[];
+  clientName?: string; // Opcional para facilitar display
 }
 
 export interface LoginCredentials {

@@ -10,6 +10,7 @@ const mapCaseFromDB = (dbCase: any, dbSteps: any[], dbClient: any): LegalCase =>
     type: dbCase.template_id || dbCase.case_type, // Fallback
     benefitType: dbCase.benefit_type as BenefitType,
     title: dbCase.title,
+    responsibleLawyer: dbCase.responsible_lawyer, // Novo campo
     startDate: dbCase.start_date,
     status: dbCase.status as CaseStatus,
     clientName: dbClient?.name,
@@ -41,7 +42,8 @@ export const supabaseService = {
       .single();
 
     if (error || !userProfile) return { user: null, error: 'Credenciais inválidas.' };
-    return { user: userProfile };
+    // Map snake_case to camelCase if needed for jobTitle
+    return { user: { ...userProfile, jobTitle: userProfile.job_title } };
   },
 
   register: async (name: string, pin: string): Promise<{ user: User | null; error?: string }> => {
@@ -61,19 +63,27 @@ export const supabaseService = {
       .single();
 
     if (error) return { user: null, error: error.message };
-    return { user: data };
+    return { user: { ...data, jobTitle: data.job_title } };
   },
 
-  createUser: async (name: string, pin: string, role: 'CLIENT' | 'ADMIN', whatsapp?: string) => {
+  createUser: async (name: string, pin: string, role: 'CLIENT' | 'ADMIN', whatsapp?: string, jobTitle?: string) => {
     if (!supabase) return;
-    const { data, error } = await supabase.from('profiles').insert([{ name, pin, role, whatsapp }]).select().single();
+    const payload: any = { name, pin, role, whatsapp };
+    if (jobTitle) payload.job_title = jobTitle;
+
+    const { data, error } = await supabase.from('profiles').insert([payload]).select().single();
     if (error) throw error;
-    return data;
+    return { ...data, jobTitle: data.job_title };
   },
 
   updateUser: async (id: string, updates: Partial<User>) => {
     if (!supabase) return;
-    const { error } = await supabase.from('profiles').update(updates).eq('id', id);
+    const dbUpdates: any = { ...updates };
+    if (updates.jobTitle) {
+      dbUpdates.job_title = updates.jobTitle;
+      delete dbUpdates.jobTitle;
+    }
+    const { error } = await supabase.from('profiles').update(dbUpdates).eq('id', id);
     if (error) throw error;
   },
 
@@ -86,7 +96,7 @@ export const supabaseService = {
   getAllClients: async () => {
     if (!supabase) return [];
     const { data } = await supabase.from('profiles').select('*').eq('role', 'CLIENT').order('name');
-    return data || [];
+    return data?.map(u => ({ ...u, jobTitle: u.job_title })) || [];
   },
 
   // --- TEMPLATES (NEW) ---
@@ -233,7 +243,7 @@ export const supabaseService = {
     });
   },
 
-  addCase: async (clientId: string, templateId: string, title: string, benefitType?: BenefitType) => {
+  addCase: async (clientId: string, templateId: string, title: string, benefitType?: BenefitType, responsibleLawyer?: string) => {
     if (!supabase) return;
     
     // 1. Create Case
@@ -241,10 +251,11 @@ export const supabaseService = {
       .from('cases')
       .insert([{ 
         client_id: clientId, 
-        template_id: templateId, // Armazenando ID do Template
-        case_type: templateId, // Legado
+        template_id: templateId, 
+        case_type: templateId, 
         benefit_type: benefitType,
         title, 
+        responsible_lawyer: responsibleLawyer, // Saving Lawyer
         start_date: new Date(),
         status: 'ACTIVE'
       }])
@@ -311,9 +322,6 @@ export const supabaseService = {
             .from('steps')
             .update({ status: 'CURRENT' })
             .eq('id', nextStep.id);
-        } else {
-          // Se não houver próxima etapa, marca o caso como concluído automaticamente? 
-          // Por enquanto não, o advogado faz isso manualmente para evitar conclusões acidentais.
         }
       }
     }
@@ -362,15 +370,12 @@ export const supabaseService = {
     // 1. Update old case status
     await supabase.from('cases').update({ status: 'MOVED_TO_JUDICIAL' }).eq('id', oldCase.id);
 
-    // 2. Identify Target Template (Generic or Specific)
-    // Tenta achar o template judicial padrão, se não, usa o genérico
+    // 2. Identify Target Template
     const { data: templates } = await supabase.from('templates').select('*');
     let targetTemplateId = 'JUDICIAL_PREVIDENCIARIO';
     
-    // Check if JUDICIAL_PREVIDENCIARIO exists in DB (it should be seeded)
     const judPrevExists = templates?.find(t => t.id === 'JUDICIAL_PREVIDENCIARIO');
     if (!judPrevExists) {
-      // Fallback to Generic
       const genericJud = templates?.find(t => t.id === 'GENERICO_JUDICIAL');
       if (genericJud) targetTemplateId = genericJud.id;
     }
@@ -384,6 +389,7 @@ export const supabaseService = {
         case_type: targetTemplateId, 
         benefit_type: oldCase.benefitType,
         title: `Judicial: ${oldCase.title}`, 
+        responsible_lawyer: oldCase.responsibleLawyer, // Copy Lawyer
         start_date: new Date(),
         status: 'ACTIVE'
       }])
