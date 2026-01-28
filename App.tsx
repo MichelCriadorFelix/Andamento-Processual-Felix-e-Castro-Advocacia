@@ -91,13 +91,22 @@ const App: React.FC = () => {
         const allClients = await api.getAllClients();
         setCases(allCases);
         setClients(allClients);
+
+        // SYNC ACTIVE CASE: Se houver um caso aberto, atualiza ele com os dados novos vindos do banco
+        if (activeCase) {
+          const updatedActiveCase = allCases.find(c => c.id === activeCase.id);
+          if (updatedActiveCase) {
+            setActiveCase(updatedActiveCase);
+          }
+        }
+
       } else {
         const myCases = await api.getCasesByClient(currentUser.id);
         setCases(myCases);
       }
     };
     loadData();
-  }, [currentUser, refreshKey, view]);
+  }, [currentUser, refreshKey, view]); // Remove activeCase from dependency to avoid loop, handled inside logic
 
   const toggleTheme = () => {
     setDarkMode(!darkMode);

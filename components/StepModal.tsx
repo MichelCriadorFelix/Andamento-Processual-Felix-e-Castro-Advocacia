@@ -47,6 +47,20 @@ export const StepModal: React.FC<StepModalProps> = ({
     }
   }, [step, isAdding, isOpen]);
 
+  const handleGeneralSave = () => {
+    // 1. Verifica se houve alteração no Título ou Duração e salva se necessário
+    if (onRename && step && (editedLabel !== step.label || editedDuration !== step.expectedDuration)) {
+      onRename(editedLabel, editedDuration);
+    }
+
+    // 2. Salva o comentário (padrão)
+    if (onUpdate) {
+      onUpdate(comment, false);
+    }
+    
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   // --- MODO ADICIONAR ETAPA ---
@@ -156,6 +170,7 @@ export const StepModal: React.FC<StepModalProps> = ({
                   setIsEditingLabel(false);
                 }} 
                 className="text-green-400 hover:text-green-200"
+                title="Salvar Nome"
               >
                 <Save className="w-4 h-4" />
               </button>
@@ -234,10 +249,7 @@ export const StepModal: React.FC<StepModalProps> = ({
           {isAdmin && (
             <>
               <button 
-                onClick={() => {
-                  if (onUpdate) onUpdate(comment, false);
-                  onClose();
-                }}
+                onClick={handleGeneralSave}
                 className="flex items-center px-4 py-2 bg-white dark:bg-slate-800 border border-red-900 dark:border-slate-500 text-red-900 dark:text-slate-300 rounded-none text-sm font-bold uppercase tracking-wider"
               >
                 <Save className="w-4 h-4 mr-2" /> Salvar
