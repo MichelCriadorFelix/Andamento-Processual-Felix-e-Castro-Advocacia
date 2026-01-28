@@ -7,7 +7,7 @@ import { isSupabaseConfigured } from './lib/supabase';
 import { Timeline } from './components/Timeline';
 import { StepModal } from './components/StepModal';
 import { FloatingSupport } from './components/FloatingSupport';
-import { Scale, LogOut, User as UserIcon, FileText, Briefcase, Users, PlusCircle, Moon, Sun, MessageCircle, Gavel, CheckCheck, ArrowRightLeft, Edit, Trash2, Archive, ChevronLeft, ChevronRight, Search, Lock, Unlock, Settings, List, Plus, X, MoreVertical, Wifi, WifiOff, RefreshCw, Globe, BriefcaseIcon } from 'lucide-react';
+import { Scale, LogOut, User as UserIcon, FileText, Briefcase, Users, PlusCircle, Moon, Sun, MessageCircle, Gavel, CheckCheck, ArrowRightLeft, Edit, Trash2, Archive, ChevronLeft, ChevronRight, Search, Lock, Unlock, Settings, List, Plus, X, MoreVertical, Wifi, WifiOff, RefreshCw, Globe, BriefcaseIcon, Shield } from 'lucide-react';
 import { PREVIDENCIARIO_BENEFITS } from './constants';
 
 const api = isSupabaseConfigured ? supabaseService : mockService;
@@ -22,7 +22,7 @@ const App: React.FC = () => {
   
   // Data State
   const [cases, setCases] = useState<LegalCase[]>([]);
-  const [clients, setClients] = useState<User[]>([]);
+  const [users, setUsers] = useState<User[]>([]); // Mudado de 'clients' para 'users' para englobar todos
   const [templates, setTemplates] = useState<CaseTemplate[]>([]);
 
   const [activeCase, setActiveCase] = useState<LegalCase | null>(null);
@@ -61,10 +61,11 @@ const App: React.FC = () => {
   const [newTemplateStepDuration, setNewTemplateStepDuration] = useState(15);
   const [newTemplateStepPosition, setNewTemplateStepPosition] = useState('END'); // 'END', 'START', or Index
 
-  // Client Manager State
+  // Client/User Manager State
+  const [userFilter, setUserFilter] = useState<'ALL' | 'TEAM' | 'CLIENTS'>('ALL');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [editingClient, setEditingClient] = useState<User | null>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
 
   // Modals
   const [isAddStepModalOpen, setIsAddStepModalOpen] = useState(false);
@@ -97,9 +98,10 @@ const App: React.FC = () => {
 
         if (currentUser.role === 'ADMIN') {
           const allCases = await api.getAllCases();
-          const allClients = await api.getAllClients();
+          // Agora carrega todos os usuários (Users + Admins)
+          const allUsers = await (api as any).getAllUsers();
           setCases(allCases);
-          setClients(allClients);
+          setUsers(allUsers);
 
           // Default responsible lawyer to current user if empty
           if (!newCaseResponsibleLawyer) {
@@ -231,12 +233,12 @@ const App: React.FC = () => {
   };
 
   const handleWhatsAppContact = (clientId: string) => {
-    const client = clients.find(c => c.id === clientId);
+    const client = users.find(c => c.id === clientId);
     if (client && client.whatsapp) {
       const num = client.whatsapp.replace(/\D/g, '');
       window.open(`https://wa.me/55${num}?text=Olá ${client.name}, entrando em contato sobre seu processo.`, '_blank');
     } else {
-      alert("Este cliente não possui WhatsApp cadastrado.");
+      alert("Este usuário não possui WhatsApp cadastrado.");
     }
   };
 
@@ -322,18 +324,33 @@ const App: React.FC = () => {
      }
   };
 
-  // --- Other Handlers (Existing) ---
-  const handleUpdateClient = async (updatedUser: User) => {
+  // --- User Manager Logic (Unified) ---
+  const handleUpdateUser = async (updatedUser: User) => {
     if ((api as any).updateUser) {
-      await (api as any).updateUser(updatedUser.id, { name: updatedUser.name, pin: updatedUser.pin, whatsapp: updatedUser.whatsapp, archived: updatedUser.archived });
-      setEditingClient(null); setRefreshKey(k => k + 1);
+      await (api as any).updateUser(updatedUser.id, { 
+        name: updatedUser.name, 
+        pin: updatedUser.pin, 
+        whatsapp: updatedUser.whatsapp, 
+        archived: updatedUser.archived,
+        jobTitle: updatedUser.jobTitle,
+        role: updatedUser.role
+      });
+      setEditingUser(null); 
+      setRefreshKey(k => k + 1);
     }
   };
-  const handleDeleteClient = async (id: string) => {
-    if (confirm('Tem certeza?')) { if ((api as any).deleteUser) { await (api as any).deleteUser(id); setRefreshKey(k => k + 1); } }
+  
+  const handleDeleteUser = async (id: string) => {
+    if (confirm('Tem certeza? Isso pode afetar os processos vinculados a este usuário.')) { 
+      if ((api as any).deleteUser) { 
+        await (api as any).deleteUser(id); 
+        setRefreshKey(k => k + 1); 
+      } 
+    }
   };
-  const toggleArchiveClient = async (user: User) => {
-     if (confirm(`Deseja ${user.archived ? 'desbloquear' : 'bloquear'} o acesso deste cliente?`)) await handleUpdateClient({ ...user, archived: !user.archived });
+  
+  const toggleArchiveUser = async (user: User) => {
+     if (confirm(`Deseja ${user.archived ? 'desbloquear' : 'bloquear'} o acesso deste usuário?`)) await handleUpdateUser({ ...user, archived: !user.archived });
   };
   
   // Helpers
@@ -356,11 +373,16 @@ const App: React.FC = () => {
     return matchesTitle || matchesClient || matchesLawyer || matchesStatus;
   });
 
-  // Client Pagination
+  // User/Client Pagination
+  const filteredUsers = users.filter(u => {
+     if (userFilter === 'TEAM') return u.role === 'ADMIN';
+     if (userFilter === 'CLIENTS') return u.role === 'CLIENT';
+     return true;
+  });
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentClients = clients.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(clients.length / itemsPerPage);
+  const currentUsers = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
 
   return (
     <div className={darkMode ? 'dark' : ''}>
@@ -440,7 +462,7 @@ const App: React.FC = () => {
                             <RefreshCw className="w-4 h-4" />
                          </button>
                          <button onClick={() => setView('CLIENT_MANAGER')} className="hidden md:flex items-center space-x-2 px-3 py-1.5 bg-red-900/50 hover:bg-red-900 rounded text-sm border border-red-800">
-                           <Users className="w-4 h-4" /><span>Clientes</span>
+                           <Users className="w-4 h-4" /><span>Usuários</span>
                          </button>
                          <button onClick={() => setView('TEMPLATE_MANAGER')} className="hidden md:flex items-center space-x-2 px-3 py-1.5 bg-red-900/50 hover:bg-red-900 rounded text-sm border border-red-800">
                            <Settings className="w-4 h-4" /><span>Modelos</span>
@@ -498,7 +520,7 @@ const App: React.FC = () => {
                         <div className="space-y-4">
                           <select className="w-full border-b bg-slate-50 dark:bg-slate-700/50 p-3 text-sm dark:text-white" value={selectedClientId} onChange={e => setSelectedClientId(e.target.value)}>
                             <option value="">Selecione o Cliente</option>
-                            {clients.filter(c => !c.archived).map(c => (<option key={c.id} value={c.id}>{c.name}</option>))}
+                            {users.filter(u => u.role === 'CLIENT' && !u.archived).map(c => (<option key={c.id} value={c.id}>{c.name}</option>))}
                           </select>
                           <select className="w-full border-b bg-slate-50 dark:bg-slate-700/50 p-3 text-sm dark:text-white" value={newCaseTemplateId} onChange={e => setNewCaseTemplateId(e.target.value)}>
                             {templates.map(t => (<option key={t.id} value={t.id}>{t.label}</option>))}
@@ -709,16 +731,38 @@ const App: React.FC = () => {
                 </div>
               )}
 
-              {/* ... (CLIENT MANAGER view) ... */}
+              {/* ... (CLIENT/USER MANAGER view - UNIFIED) ... */}
                {view === 'CLIENT_MANAGER' && currentUser.role === 'ADMIN' && (
                 <div className="animate-fade-in space-y-6">
                   <div className="flex justify-between items-center">
                     <button onClick={() => setView('DASHBOARD')} className="text-sm font-bold text-slate-500 hover:text-red-900 flex items-center uppercase tracking-wider"><ChevronLeft className="w-4 h-4 mr-1" /> Voltar</button>
                   </div>
                   
+                  {/* Tabs Filter */}
+                  <div className="flex space-x-2 border-b border-slate-200 dark:border-slate-700 pb-1">
+                    <button 
+                      onClick={() => { setUserFilter('ALL'); setCurrentPage(1); }} 
+                      className={`px-4 py-2 text-sm font-bold rounded-t-lg transition-colors ${userFilter === 'ALL' ? 'bg-red-900 text-white' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                    >
+                      Todos
+                    </button>
+                    <button 
+                      onClick={() => { setUserFilter('TEAM'); setCurrentPage(1); }} 
+                      className={`px-4 py-2 text-sm font-bold rounded-t-lg transition-colors ${userFilter === 'TEAM' ? 'bg-red-900 text-white' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                    >
+                      Equipe
+                    </button>
+                    <button 
+                      onClick={() => { setUserFilter('CLIENTS'); setCurrentPage(1); }} 
+                      className={`px-4 py-2 text-sm font-bold rounded-t-lg transition-colors ${userFilter === 'CLIENTS' ? 'bg-red-900 text-white' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                    >
+                      Clientes
+                    </button>
+                  </div>
+                  
                   <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-4 mb-4">
                     <p className="text-sm text-blue-700 dark:text-blue-300">
-                      <strong>Dica para Admin:</strong> Para redefinir a senha de um cliente, basta editar o campo "PIN" e clicar no ícone de confirmação (<CheckCheck className="w-3 h-3 inline"/>). O cliente poderá acessar imediatamente com a nova senha.
+                      <strong>Gestão Completa:</strong> Agora você pode gerenciar Clientes e Membros da Equipe. Use a coluna "Cargo/Função" para promover um cliente a membro da equipe ou alterar a função de um funcionário.
                     </p>
                   </div>
 
@@ -726,52 +770,87 @@ const App: React.FC = () => {
                     <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
                       <thead className="bg-slate-50 dark:bg-slate-700/50">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase">Nome (Login)</th>
+                          <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase">Nome</th>
                           <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase">WhatsApp</th>
-                          <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase">PIN (Senha)</th>
+                          <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase">PIN</th>
+                          <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase">Cargo / Função</th>
                           <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase">Ações</th>
                         </tr>
                       </thead>
                       <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
-                        {currentClients.map(client => (
-                          <tr key={client.id} className={client.archived ? 'bg-slate-50 dark:bg-slate-900 opacity-60' : ''}>
+                        {currentUsers.map(user => (
+                          <tr key={user.id} className={user.archived ? 'bg-slate-50 dark:bg-slate-900 opacity-60' : ''}>
                              <td className="px-6 py-4 text-sm font-medium dark:text-slate-200">
-                               {editingClient?.id === client.id ? (
+                               {editingUser?.id === user.id ? (
                                 <input 
                                   className="border p-1 rounded dark:bg-slate-700 w-full" 
-                                  value={editingClient.name} 
-                                  onChange={e => setEditingClient({...editingClient, name: e.target.value})} 
+                                  value={editingUser.name} 
+                                  onChange={e => setEditingUser({...editingUser, name: e.target.value})} 
                                 />
-                              ) : client.name}
+                              ) : user.name}
                              </td>
                              <td className="px-6 py-4 text-sm dark:text-slate-300">
-                               {editingClient?.id === client.id ? (
+                               {editingUser?.id === user.id ? (
                                 <input 
                                   className="border p-1 rounded w-full dark:bg-slate-700" 
-                                  value={editingClient.whatsapp || ''} 
-                                  onChange={e => setEditingClient({...editingClient, whatsapp: e.target.value})} 
+                                  value={editingUser.whatsapp || ''} 
+                                  onChange={e => setEditingUser({...editingUser, whatsapp: e.target.value})} 
                                   placeholder="552199999999"
                                 />
-                              ) : client.whatsapp || '-'}
+                              ) : user.whatsapp || '-'}
                              </td>
                              <td className="px-6 py-4 text-sm font-mono dark:text-slate-300">
-                               {editingClient?.id === client.id ? (
+                               {editingUser?.id === user.id ? (
                                 <input 
                                   className="border p-1 rounded w-24 dark:bg-slate-700 bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300" 
-                                  value={editingClient.pin} 
-                                  onChange={e => setEditingClient({...editingClient, pin: e.target.value})} 
+                                  value={editingUser.pin} 
+                                  onChange={e => setEditingUser({...editingUser, pin: e.target.value})} 
                                   placeholder="Novo PIN"
                                 />
-                              ) : client.pin}
+                              ) : '******'}
+                             </td>
+                             {/* COLUNA DE CARGO/FUNÇÃO */}
+                             <td className="px-6 py-4 text-sm dark:text-slate-300">
+                                {editingUser?.id === user.id ? (
+                                   <select 
+                                     className="border p-1 rounded w-full dark:bg-slate-700"
+                                     value={editingUser.role === 'CLIENT' ? 'CLIENT' : (editingUser.jobTitle || 'Advogado(a)')}
+                                     onChange={e => {
+                                        const val = e.target.value;
+                                        if (val === 'CLIENT') {
+                                           setEditingUser({...editingUser, role: 'CLIENT', jobTitle: undefined});
+                                        } else {
+                                           setEditingUser({...editingUser, role: 'ADMIN', jobTitle: val});
+                                        }
+                                     }}
+                                   >
+                                     <option value="CLIENT">Cliente</option>
+                                     <option disabled>--- Equipe ---</option>
+                                     <option value="Advogado(a)">Advogado(a)</option>
+                                     <option value="Secretário(a)">Secretário(a)</option>
+                                     <option value="Estagiário(a)">Estagiário(a)</option>
+                                     <option value="Paralegal">Paralegal</option>
+                                     <option value="Financeiro">Financeiro</option>
+                                     <option value="Outro">Outro</option>
+                                   </select>
+                                ) : (
+                                  user.role === 'ADMIN' ? (
+                                    <span className="flex items-center gap-1 text-purple-700 dark:text-purple-400 font-bold bg-purple-50 dark:bg-purple-900/20 px-2 py-0.5 rounded text-xs border border-purple-200 dark:border-purple-800">
+                                      <Shield className="w-3 h-3" /> {user.jobTitle || 'Admin'}
+                                    </span>
+                                  ) : (
+                                    <span className="text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-xs">Cliente</span>
+                                  )
+                                )}
                              </td>
                              <td className="px-6 py-4 text-right text-sm font-medium space-x-2">
-                               {editingClient?.id === client.id ? (
-                                <button onClick={() => handleUpdateClient(editingClient)} className="text-green-600 hover:text-green-900 p-1 hover:bg-green-50 rounded" title="Salvar Alterações"><CheckCheck className="w-4 h-4" /></button>
+                               {editingUser?.id === user.id ? (
+                                <button onClick={() => handleUpdateUser(editingUser)} className="text-green-600 hover:text-green-900 p-1 hover:bg-green-50 rounded" title="Salvar Alterações"><CheckCheck className="w-4 h-4" /></button>
                                ) : (
                                 <>
-                                  <button onClick={() => setEditingClient(client)} className="text-indigo-600 hover:text-indigo-900 p-1 hover:bg-indigo-50 rounded" title="Editar / Redefinir Senha"><Edit className="w-4 h-4" /></button>
-                                  <button onClick={() => toggleArchiveClient(client)} className={`${client.archived ? 'text-green-600' : 'text-amber-600'} hover:opacity-80 p-1 hover:bg-slate-50 rounded`} title={client.archived ? "Desbloquear Acesso" : "Bloquear Acesso"}>{client.archived ? <Unlock className="w-4 h-4"/> : <Lock className="w-4 h-4"/>}</button>
-                                  <button onClick={() => handleDeleteClient(client.id)} className="text-red-600 hover:text-red-900 p-1 hover:bg-red-50 rounded" title="Excluir"><Trash2 className="w-4 h-4"/></button>
+                                  <button onClick={() => setEditingUser(user)} className="text-indigo-600 hover:text-indigo-900 p-1 hover:bg-indigo-50 rounded" title="Editar / Mudar Cargo"><Edit className="w-4 h-4" /></button>
+                                  <button onClick={() => toggleArchiveUser(user)} className={`${user.archived ? 'text-green-600' : 'text-amber-600'} hover:opacity-80 p-1 hover:bg-slate-50 rounded`} title={user.archived ? "Desbloquear Acesso" : "Bloquear Acesso"}>{user.archived ? <Unlock className="w-4 h-4"/> : <Lock className="w-4 h-4"/>}</button>
+                                  <button onClick={() => handleDeleteUser(user.id)} className="text-red-600 hover:text-red-900 p-1 hover:bg-red-50 rounded" title="Excluir"><Trash2 className="w-4 h-4"/></button>
                                 </>
                                )}
                              </td>

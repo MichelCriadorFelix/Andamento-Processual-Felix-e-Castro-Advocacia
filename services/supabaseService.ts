@@ -79,10 +79,13 @@ export const supabaseService = {
   updateUser: async (id: string, updates: Partial<User>) => {
     if (!supabase) return;
     const dbUpdates: any = { ...updates };
-    if (updates.jobTitle) {
+    
+    // Mapeia camelCase para snake_case do banco
+    if (updates.jobTitle !== undefined) {
       dbUpdates.job_title = updates.jobTitle;
       delete dbUpdates.jobTitle;
     }
+    
     const { error } = await supabase.from('profiles').update(dbUpdates).eq('id', id);
     if (error) throw error;
   },
@@ -93,9 +96,10 @@ export const supabaseService = {
     if (error) throw error;
   },
 
-  getAllClients: async () => {
+  getAllUsers: async () => {
     if (!supabase) return [];
-    const { data } = await supabase.from('profiles').select('*').eq('role', 'CLIENT').order('name');
+    // Retorna todos os usuários (Clientes e Admins) ordenados por nome
+    const { data } = await supabase.from('profiles').select('*').order('name');
     return data?.map(u => ({ ...u, jobTitle: u.job_title })) || [];
   },
 
@@ -127,7 +131,6 @@ export const supabaseService = {
 
   createTemplate: async (label: string) => {
     if (!supabase) return;
-    // Fix: Gera um ID único manualmente pois a tabela de templates não tem default (para permitir IDs de sistema textuais)
     const newId = `custom-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
     
     const { data, error } = await supabase.from('templates').insert([{ 
@@ -148,16 +151,13 @@ export const supabaseService = {
   addTemplateStep: async (templateId: string, label: string, duration: number, positionIndex?: number) => {
     if (!supabase) return;
     
-    // Se positionIndex for fornecido, precisamos deslocar os itens existentes
     if (positionIndex !== undefined) {
-      // 1. Busca passos que precisam ser deslocados
       const { data: stepsToShift } = await supabase
         .from('template_steps')
         .select('id, step_order')
         .eq('template_id', templateId)
         .gte('step_order', positionIndex);
       
-      // 2. Atualiza a ordem deles
       if (stepsToShift && stepsToShift.length > 0) {
         for (const s of stepsToShift) {
           await supabase
@@ -167,7 +167,6 @@ export const supabaseService = {
         }
       }
 
-      // 3. Insere o novo
       await supabase.from('template_steps').insert([{
         template_id: templateId,
         label,
@@ -176,7 +175,6 @@ export const supabaseService = {
       }]);
 
     } else {
-      // Comportamento padrão: Adicionar ao final
       const { data: steps } = await supabase.from('template_steps').select('step_order').eq('template_id', templateId);
       const maxOrder = steps ? steps.length : 0;
 
@@ -191,13 +189,9 @@ export const supabaseService = {
 
   deleteTemplateStep: async (templateId: string, stepId: string) => {
      if (!supabase) return;
-     // 1. Get step to delete to know its order
      const { data: stepToDelete } = await supabase.from('template_steps').select('step_order').eq('id', stepId).single();
-     
-     // 2. Delete it
      await supabase.from('template_steps').delete().eq('id', stepId);
 
-     // 3. Reorder subsequent steps (gap closing)
      if (stepToDelete) {
        const { data: stepsToShift } = await supabase
          .from('template_steps')
@@ -246,7 +240,6 @@ export const supabaseService = {
   addCase: async (clientId: string, templateId: string, title: string, benefitType?: BenefitType, responsibleLawyer?: string) => {
     if (!supabase) return;
     
-    // 1. Create Case
     const { data: newCase, error } = await supabase
       .from('cases')
       .insert([{ 
@@ -255,7 +248,7 @@ export const supabaseService = {
         case_type: templateId, 
         benefit_type: benefitType,
         title, 
-        responsible_lawyer: responsibleLawyer, // Saving Lawyer
+        responsible_lawyer: responsibleLawyer, 
         start_date: new Date(),
         status: 'ACTIVE'
       }])
@@ -264,7 +257,6 @@ export const supabaseService = {
 
     if (error || !newCase) throw error;
 
-    // 2. Fetch Template Steps from DB
     const { data: tSteps } = await supabase
       .from('template_steps')
       .select('*')
@@ -298,16 +290,12 @@ export const supabaseService = {
       updates.completed_date = completionDate || new Date();
     }
 
-    // 1. Atualiza a etapa atual
     await supabase.from('steps').update(updates).eq('id', stepId);
 
     if (action === 'COMPLETE') {
-      // 2. Busca a etapa atual para saber a ordem
       const { data: currentStep } = await supabase.from('steps').select('step_order').eq('id', stepId).single();
       
       if (currentStep) {
-        // 3. Busca a PRÓXIMA etapa disponível (ordem > atual)
-        // Isso resolve o problema de buracos na numeração se alguém excluir uma etapa
         const { data: nextStep } = await supabase
           .from('steps')
           .select('id')
@@ -367,10 +355,8 @@ export const supabaseService = {
   transformToJudicial: async (oldCase: LegalCase) => {
     if (!supabase) return;
 
-    // 1. Update old case status
     await supabase.from('cases').update({ status: 'MOVED_TO_JUDICIAL' }).eq('id', oldCase.id);
 
-    // 2. Identify Target Template
     const { data: templates } = await supabase.from('templates').select('*');
     let targetTemplateId = 'JUDICIAL_PREVIDENCIARIO';
     
@@ -380,7 +366,6 @@ export const supabaseService = {
       if (genericJud) targetTemplateId = genericJud.id;
     }
 
-    // 3. Create new Case
     const { data: newCase, error } = await supabase
       .from('cases')
       .insert([{ 
@@ -389,7 +374,7 @@ export const supabaseService = {
         case_type: targetTemplateId, 
         benefit_type: oldCase.benefitType,
         title: `Judicial: ${oldCase.title}`, 
-        responsible_lawyer: oldCase.responsibleLawyer, // Copy Lawyer
+        responsible_lawyer: oldCase.responsibleLawyer, 
         start_date: new Date(),
         status: 'ACTIVE'
       }])
@@ -398,7 +383,6 @@ export const supabaseService = {
 
     if (error || !newCase) throw error;
 
-    // 4. Copy Steps
      const { data: tSteps } = await supabase
       .from('template_steps')
       .select('*')

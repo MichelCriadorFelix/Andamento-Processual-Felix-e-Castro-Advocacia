@@ -73,9 +73,9 @@ export const mockService = {
     setStored(STORAGE_KEYS.USERS, users);
   },
 
-  getAllClients: () => {
+  getAllUsers: () => {
     users = getStored(STORAGE_KEYS.USERS, users);
-    return users.filter(u => u.role === 'CLIENT');
+    return users.sort((a, b) => a.name.localeCompare(b.name));
   },
 
   // --- TEMPLATES ---
