@@ -1,24 +1,48 @@
 
-import { User, LegalCase, LoginCredentials, CaseType, Step, BenefitType, CaseStatus, CaseTemplate, TemplateStep } from '../types';
+import { User, LegalCase, LoginCredentials, Step, BenefitType, CaseStatus, CaseTemplate, TemplateStep } from '../types';
 import { INITIAL_TEMPLATES, INITIAL_CLIENTS, ADMIN_NAMES } from '../constants';
 
-let users: User[] = [...INITIAL_CLIENTS];
-let cases: LegalCase[] = []; 
-let templates: CaseTemplate[] = [...INITIAL_TEMPLATES];
+// Chaves para persistência no navegador
+const STORAGE_KEYS = {
+  USERS: 'fec_adv_users_v1',
+  CASES: 'fec_adv_cases_v1',
+  TEMPLATES: 'fec_adv_templates_v1'
+};
+
+// Helpers de Storage
+const getStored = <T>(key: string, defaultValue: T): T => {
+  if (typeof window === 'undefined') return defaultValue;
+  const stored = localStorage.getItem(key);
+  return stored ? JSON.parse(stored) : defaultValue;
+};
+
+const setStored = (key: string, value: any) => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(key, JSON.stringify(value));
+};
+
+// Estado Inicial carregado do LocalStorage ou Defaults
+let users: User[] = getStored(STORAGE_KEYS.USERS, [...INITIAL_CLIENTS]);
+let cases: LegalCase[] = getStored(STORAGE_KEYS.CASES, []); 
+let templates: CaseTemplate[] = getStored(STORAGE_KEYS.TEMPLATES, [...INITIAL_TEMPLATES]);
 
 export const mockService = {
   // --- AUTH & USERS ---
   login: async (creds: LoginCredentials): Promise<{ user: User | null; error?: string }> => {
+    // Recarrega users para garantir sincronia entre abas
+    users = getStored(STORAGE_KEYS.USERS, users);
+    
     const user = users.find(
       u => u.name.toLowerCase() === creds.identifier.toLowerCase() 
            && u.pin === creds.secret 
            && !u.archived
     );
     if (user) return { user };
-    return { user: null, error: 'Credenciais inválidas.' };
+    return { user: null, error: 'Credenciais inválidas (Modo Local).' };
   },
 
   register: async (name: string, pin: string): Promise<{ user: User | null; error?: string }> => {
+    users = getStored(STORAGE_KEYS.USERS, users);
     const existing = users.find(u => u.name.toLowerCase() === name.toLowerCase());
     if (existing) return { user: null, error: 'Usuário já cadastrado. Faça login.' };
 
@@ -27,27 +51,36 @@ export const mockService = {
 
     const newUser: User = { id: `u-${Date.now()}`, name, pin, role, archived: false };
     users = [...users, newUser];
+    setStored(STORAGE_KEYS.USERS, users);
+    
     return { user: newUser };
   },
 
   createUser: async (name: string, pin: string, role: 'CLIENT' | 'ADMIN', whatsapp?: string) => {
     const newUser: User = { id: `u-${Date.now()}`, name, pin, role, whatsapp, archived: false };
     users = [...users, newUser];
+    setStored(STORAGE_KEYS.USERS, users);
     return newUser;
   },
 
   updateUser: async (id: string, updates: Partial<User>) => {
     users = users.map(u => u.id === id ? { ...u, ...updates } : u);
+    setStored(STORAGE_KEYS.USERS, users);
   },
 
   deleteUser: async (id: string) => {
     users = users.filter(u => u.id !== id);
+    setStored(STORAGE_KEYS.USERS, users);
   },
 
-  getAllClients: () => users.filter(u => u.role === 'CLIENT'),
+  getAllClients: () => {
+    users = getStored(STORAGE_KEYS.USERS, users);
+    return users.filter(u => u.role === 'CLIENT');
+  },
 
   // --- TEMPLATES ---
   getTemplates: async (): Promise<CaseTemplate[]> => {
+    templates = getStored(STORAGE_KEYS.TEMPLATES, templates);
     return templates;
   },
 
@@ -59,11 +92,13 @@ export const mockService = {
       isSystem: false
     };
     templates = [...templates, newTemplate];
+    setStored(STORAGE_KEYS.TEMPLATES, templates);
     return newTemplate;
   },
 
   deleteTemplate: async (id: string) => {
     templates = templates.filter(t => t.id !== id);
+    setStored(STORAGE_KEYS.TEMPLATES, templates);
   },
 
   addTemplateStep: async (templateId: string, label: string, duration: number, positionIndex?: number) => {
@@ -73,7 +108,6 @@ export const mockService = {
       let newSteps = [...t.steps];
       const newOrder = positionIndex !== undefined ? positionIndex : t.steps.length;
 
-      // Shift steps if inserting in middle
       if (positionIndex !== undefined) {
         newSteps = newSteps.map(s => {
           if (s.stepOrder >= newOrder) {
@@ -95,24 +129,28 @@ export const mockService = {
 
       return { ...t, steps: newSteps };
     });
+    setStored(STORAGE_KEYS.TEMPLATES, templates);
   },
 
   deleteTemplateStep: async (templateId: string, stepId: string) => {
      templates = templates.map(t => {
       if (t.id !== templateId) return t;
-      
       const filtered = t.steps.filter(s => s.id !== stepId);
-      // Reindex
       const reindexed = filtered.map((s, idx) => ({ ...s, stepOrder: idx }));
-
       return { ...t, steps: reindexed };
     });
+    setStored(STORAGE_KEYS.TEMPLATES, templates);
   },
 
   // --- CASES ---
-  getCasesByClient: (clientId: string) => cases.filter(c => c.clientId === clientId),
+  getCasesByClient: (clientId: string) => {
+    cases = getStored(STORAGE_KEYS.CASES, cases);
+    return cases.filter(c => c.clientId === clientId);
+  },
 
   getAllCases: () => {
+    cases = getStored(STORAGE_KEYS.CASES, cases);
+    users = getStored(STORAGE_KEYS.USERS, users);
     return cases.map(c => {
       const client = users.find(u => u.id === c.clientId);
       return { ...c, clientName: client?.name || 'Desconhecido' };
@@ -126,7 +164,7 @@ export const mockService = {
     const newCase: LegalCase = {
       id: `case-${Date.now()}`,
       clientId,
-      type: templateId, // Mantendo referência
+      type: templateId, 
       benefitType,
       title,
       startDate: new Date().toISOString().split('T')[0],
@@ -140,6 +178,7 @@ export const mockService = {
       }))
     };
     cases = [...cases, newCase];
+    setStored(STORAGE_KEYS.CASES, cases);
     return newCase;
   },
 
@@ -167,6 +206,7 @@ export const mockService = {
       newSteps[stepIndex] = currentStep;
       return { ...c, steps: newSteps };
     });
+    setStored(STORAGE_KEYS.CASES, cases);
   },
 
   addStep: (caseId: string, label: string, position: number, duration: number) => {
@@ -184,6 +224,7 @@ export const mockService = {
       const reindexed = updatedSteps.map((s, idx) => ({ ...s, stepOrder: idx }));
       return { ...c, steps: reindexed };
     });
+    setStored(STORAGE_KEYS.CASES, cases);
   },
 
   deleteStep: (stepId: string) => {
@@ -191,18 +232,22 @@ export const mockService = {
       ...c,
       steps: c.steps.filter(s => s.id !== stepId)
     }));
+    setStored(STORAGE_KEYS.CASES, cases);
   },
 
   updateCaseStatus: (caseId: string, status: CaseStatus) => {
     cases = cases.map(c => c.id === caseId ? { ...c, status } : c);
+    setStored(STORAGE_KEYS.CASES, cases);
   },
 
   deleteCase: (caseId: string) => {
     cases = cases.filter(c => c.id !== caseId);
+    setStored(STORAGE_KEYS.CASES, cases);
   },
   
   updateCaseTitle: (caseId: string, newTitle: string) => {
     cases = cases.map(c => c.id === caseId ? { ...c, title: newTitle } : c);
+    setStored(STORAGE_KEYS.CASES, cases);
   },
 
   transformToJudicial: (oldCase: LegalCase) => {
@@ -229,6 +274,7 @@ export const mockService = {
       }))
     };
     cases = [...cases, newCase];
+    setStored(STORAGE_KEYS.CASES, cases);
     return newCase;
   }
 };
