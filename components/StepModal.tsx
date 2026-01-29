@@ -243,8 +243,25 @@ export const StepModal: React.FC<StepModalProps> = ({
       setDocName('');
       loadDocuments(); 
     } catch (e: any) {
-      console.error(e);
-      alert(`Erro ao salvar documento: ${e.message || e}`);
+      console.error("Erro completo:", e);
+      
+      // Tratamento de Erro Detalhado para o Usuário
+      let errorMsg = "Erro desconhecido.";
+      
+      if (typeof e === 'string') errorMsg = e;
+      else if (e?.message) errorMsg = e.message;
+      else if (e?.error_description) errorMsg = e.error_description;
+      else if (e?.error && typeof e.error === 'string') errorMsg = e.error;
+      else errorMsg = JSON.stringify(e);
+
+      // Dicas úteis baseadas no erro
+      if (errorMsg.toLowerCase().includes("bucket") || errorMsg.toLowerCase().includes("not found")) {
+         errorMsg += "\n\nDICA: O bucket 'documents' pode não existir no Supabase. Crie um bucket público chamado 'documents'.";
+      } else if (errorMsg.toLowerCase().includes("security") || errorMsg.toLowerCase().includes("policy")) {
+         errorMsg += "\n\nDICA: Erro de Permissão (RLS). Verifique as Policies do Storage no Supabase para permitir uploads.";
+      }
+
+      alert(`FALHA NO UPLOAD:\n${errorMsg}`);
     } finally {
       setIsProcessing(false);
     }
@@ -279,13 +296,11 @@ export const StepModal: React.FC<StepModalProps> = ({
     return (
       <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
         <div className="bg-white dark:bg-slate-800 rounded-lg shadow-2xl w-full max-w-md animate-fade-in border border-red-900/20">
-          {/* ... Conteúdo Adicionar (Manteve igual) ... */}
           <div className="bg-red-950 dark:bg-slate-950 px-6 py-4 border-b border-red-900 dark:border-slate-800 flex justify-between items-center">
             <h3 className="text-white font-serif font-medium text-lg">Adicionar Nova Etapa</h3>
             <button onClick={onClose} className="text-red-200 hover:text-white"><X className="w-5 h-5" /></button>
           </div>
           <div className="p-6 space-y-4">
-             {/* Form fields */}
              <div>
               <label className="block text-sm font-bold text-slate-600 dark:text-slate-400 mb-1">Nome da Etapa</label>
               <input 
@@ -534,32 +549,34 @@ export const StepModal: React.FC<StepModalProps> = ({
                              />
                           </button>
                           
-                          <div className="bg-white dark:bg-slate-700 p-2 rounded border border-slate-200 dark:border-slate-600 overflow-y-auto max-h-48">
-                             <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Páginas ({capturedImages.length})</p>
-                             <div className="grid grid-cols-1 gap-2">
+                          <div className="bg-white dark:bg-slate-700 p-2 rounded border border-slate-200 dark:border-slate-600 overflow-y-auto max-h-64">
+                             <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">Páginas ({capturedImages.length})</p>
+                             <div className="grid grid-cols-1 gap-4">
                                {capturedImages.map((img, i) => (
-                                 <div key={i} className="relative group">
-                                    <img src={img} className="w-full h-24 object-cover rounded border" alt="pag" />
-                                    {/* Controles de Edição */}
-                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                      <button onClick={() => rotateImage(i, 'left')} className="p-1 bg-white text-slate-800 rounded hover:bg-slate-200" title="Girar Esquerda">
-                                        <RotateCcw className="w-4 h-4"/>
-                                      </button>
-                                      
-                                      {/* BOTÃO DE CROP (CORTAR) */}
-                                      <button onClick={() => setCropIndex(i)} className="p-1 bg-blue-600 text-white rounded hover:bg-blue-700" title="Cortar Imagem">
-                                        <Scissors className="w-4 h-4"/>
-                                      </button>
-
-                                      <button onClick={() => removeImage(i)} className="p-1 bg-red-600 text-white rounded hover:bg-red-700" title="Remover">
-                                        <Trash2 className="w-4 h-4"/>
-                                      </button>
-
-                                      <button onClick={() => rotateImage(i, 'right')} className="p-1 bg-white text-slate-800 rounded hover:bg-slate-200" title="Girar Direita">
-                                        <RotateCw className="w-4 h-4"/>
-                                      </button>
+                                 <div key={i} className="flex flex-col bg-slate-50 dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-700 overflow-hidden">
+                                    <div className="relative h-40 bg-black/5 flex items-center justify-center">
+                                       <img src={img} className="max-w-full max-h-full object-contain" alt={`Página ${i+1}`} />
+                                       <span className="absolute top-1 right-1 bg-black/60 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">{i+1}</span>
                                     </div>
-                                    <span className="absolute bottom-1 right-1 bg-black/50 text-white text-[10px] px-1 rounded">{i+1}</span>
+                                    
+                                    {/* BARRA DE FERRAMENTAS FIXA (MOBILE FRIENDLY) */}
+                                    <div className="flex items-center justify-between p-1 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700">
+                                       <button onClick={() => rotateImage(i, 'left')} className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded" title="Girar Esq.">
+                                         <RotateCcw className="w-4 h-4"/>
+                                       </button>
+                                       
+                                       <button onClick={() => setCropIndex(i)} className="flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded text-[10px] font-bold uppercase hover:bg-blue-100" title="Cortar">
+                                         <Scissors className="w-3 h-3"/> Cortar
+                                       </button>
+
+                                       <button onClick={() => removeImage(i)} className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded" title="Remover">
+                                         <Trash2 className="w-4 h-4"/>
+                                       </button>
+                                       
+                                       <button onClick={() => rotateImage(i, 'right')} className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded" title="Girar Dir.">
+                                         <RotateCw className="w-4 h-4"/>
+                                       </button>
+                                    </div>
                                  </div>
                                ))}
                                {isProcessing && <div className="flex items-center justify-center h-10"><Loader2 className="w-4 h-4 animate-spin text-red-900"/></div>}

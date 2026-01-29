@@ -407,15 +407,17 @@ export const supabaseService = {
   uploadDocument: async (caseId: string, fileName: string, fileBlob: Blob) => {
     if (!supabase) return;
     
-    // Remove tudo que não for letra ou número para evitar erros de caminho
-    const safeFileName = fileName.replace(/[^a-zA-Z0-9]/g, '');
-    const path = `${caseId}/${Date.now()}_${safeFileName}.pdf`;
+    // Sanitização rigorosa
+    const safeFileName = fileName.replace(/[^a-zA-Z0-9_-]/g, ''); 
+    // Garante que o nome não fique vazio
+    const finalName = safeFileName || `doc_${Date.now()}`;
+    const path = `${caseId}/${Date.now()}_${finalName}.pdf`;
 
     const { data, error } = await supabase.storage
       .from('documents')
       .upload(path, fileBlob, {
         contentType: 'application/pdf',
-        upsert: true // Força sobrescrever se existir colisão (raro com timestamp)
+        upsert: true
       });
 
     if (error) {
