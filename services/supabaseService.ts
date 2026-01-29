@@ -419,6 +419,15 @@ export const supabaseService = {
     if (error) throw error;
     return data;
   },
+  
+  // Novo método para excluir
+  deleteDocument: async (caseId: string, fileName: string) => {
+    if (!supabase) return;
+    const { error } = await supabase.storage
+      .from('documents')
+      .remove([`${caseId}/${fileName}`]);
+    if (error) throw error;
+  },
 
   getDocuments: async (caseId: string): Promise<CaseDocument[]> => {
      if (!supabase) return [];
