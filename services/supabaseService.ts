@@ -406,21 +406,25 @@ export const supabaseService = {
   // --- DOCUMENTS ---
   uploadDocument: async (caseId: string, fileName: string, fileBlob: Blob) => {
     if (!supabase) return;
-    const sanitizedName = fileName.replace(/[^a-zA-Z0-9]/g, '_');
-    const path = `${caseId}/${Date.now()}_${sanitizedName}.pdf`;
+    
+    // Remove tudo que não for letra ou número para evitar erros de caminho
+    const safeFileName = fileName.replace(/[^a-zA-Z0-9]/g, '');
+    const path = `${caseId}/${Date.now()}_${safeFileName}.pdf`;
 
     const { data, error } = await supabase.storage
       .from('documents')
       .upload(path, fileBlob, {
         contentType: 'application/pdf',
-        upsert: false
+        upsert: true // Força sobrescrever se existir colisão (raro com timestamp)
       });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Erro detalhado do Supabase Upload:", error);
+      throw error;
+    }
     return data;
   },
   
-  // Novo método para excluir
   deleteDocument: async (caseId: string, fileName: string) => {
     if (!supabase) return;
     const { error } = await supabase.storage

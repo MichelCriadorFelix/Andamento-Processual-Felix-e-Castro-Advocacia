@@ -1,13 +1,38 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Step, LegalCase, CaseDocument } from '../types';
-import { X, Save, CheckSquare, Trash2, Edit2, Calendar, Camera, FileText, Download, Plus, Loader2, Image as ImageIcon, AlertTriangle } from 'lucide-react';
+import { X, Save, CheckSquare, Trash2, Edit2, Calendar, Camera, FileText, Download, Plus, Loader2, Image as ImageIcon, AlertTriangle, RotateCw, RotateCcw } from 'lucide-react';
 import { supabaseService } from '../services/supabaseService';
 import { isSupabaseConfigured } from '../lib/supabase';
 // @ts-ignore
 import jsPDF from 'jspdf';
 // @ts-ignore
 import Compressor from 'compressorjs';
+
+// Lista atualizada conforme pedido
+const DOC_TYPES = [
+  "Identidade",
+  "CPF",
+  "Comprovante de residência",
+  "Laudos",
+  "Exames/Documentos médicos",
+  "Carteira de Trabalho",
+  "Perfil Profissiográfico (PPP)",
+  "Contra-cheques",
+  "Prints de Conversa no Whatsapp",
+  "Termo de Rescisão",
+  "Certidão de Nascimento",
+  "Certidão de Casamento",
+  "Certidão de Óbito",
+  "Certidão União Estável",
+  "Fotos ambiente de trabalho",
+  "Declaração Escolar",
+  "Demais provas 1",
+  "Demais provas 2",
+  "Demais provas 3",
+  "Demais provas 4",
+  "Demais provas 5"
+];
 
 interface StepModalProps {
   step: Step | null;
@@ -20,26 +45,23 @@ interface StepModalProps {
   isAdding?: boolean; 
   stepsList?: Step[]; 
   onAdd?: (label: string, positionIndex: number, duration: number) => void;
-  activeCaseId?: string; // ID do caso para vincular documentos
+  activeCaseId?: string; 
 }
 
 export const StepModal: React.FC<StepModalProps> = ({ 
   step, isOpen, onClose, isAdmin, onUpdate, onDelete, onRename, 
   isAdding, stepsList, onAdd, activeCaseId
 }) => {
-  // States para Edição/Conclusão
   const [comment, setComment] = useState('');
   const [completionDate, setCompletionDate] = useState('');
   const [isEditingLabel, setIsEditingLabel] = useState(false);
   const [editedLabel, setEditedLabel] = useState('');
   const [editedDuration, setEditedDuration] = useState<number>(0);
 
-  // States para Adição
   const [newStepLabel, setNewStepLabel] = useState('');
   const [newStepDuration, setNewStepDuration] = useState(15);
   const [insertPosition, setInsertPosition] = useState('end');
 
-  // States para Documentos
   const [documents, setDocuments] = useState<CaseDocument[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [docName, setDocName] = useState('');
@@ -55,13 +77,10 @@ export const StepModal: React.FC<StepModalProps> = ({
       setCompletionDate(new Date().toISOString().split('T')[0]); 
       setIsEditingLabel(false);
       
-      // Reset doc states
       setIsScanning(false);
       setCapturedImages([]);
       setDocName('');
 
-      // Carregar documentos se for uma etapa de documentação e tivermos caseId
-      // Usa verificação case-insensitive mais robusta
       const isDocStep = step.label.toLowerCase().includes('documenta') || step.label.toLowerCase().includes('doc.');
       if (activeCaseId && isSupabaseConfigured && isDocStep) {
          loadDocuments();
@@ -82,8 +101,6 @@ export const StepModal: React.FC<StepModalProps> = ({
     } catch (e) { console.error("Erro ao carregar docs", e); }
   };
 
-  // --- LÓGICA DE SCANNER / PDF ---
-
   const handleCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -93,7 +110,7 @@ export const StepModal: React.FC<StepModalProps> = ({
 
     Array.from(files).forEach(file => {
       new Compressor(file, {
-        quality: 0.6,
+        quality: 0.7,
         maxWidth: 1600,
         maxHeight: 1600,
         success(result) {
@@ -111,6 +128,38 @@ export const StepModal: React.FC<StepModalProps> = ({
         },
       });
     });
+  };
+
+  // Função para girar a imagem na base64
+  const rotateImage = (index: number, direction: 'left' | 'right') => {
+    const imgData = capturedImages[index];
+    const img = new Image();
+    img.src = imgData;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      // Inverte largura e altura
+      canvas.width = img.height;
+      canvas.height = img.width;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate(direction === 'right' ? 90 * Math.PI / 180 : -90 * Math.PI / 180);
+        ctx.drawImage(img, -img.width / 2, -img.height / 2);
+        const newBase64 = canvas.toDataURL('image/jpeg');
+        
+        setCapturedImages(prev => {
+          const newArr = [...prev];
+          newArr[index] = newBase64;
+          return newArr;
+        });
+      }
+    };
+  };
+
+  const removeImage = (index: number) => {
+    if(confirm("Remover esta foto?")) {
+      setCapturedImages(prev => prev.filter((_, i) => i !== index));
+    }
   };
 
   const handleSaveDocument = async () => {
@@ -135,17 +184,16 @@ export const StepModal: React.FC<StepModalProps> = ({
 
       const pdfBlob = pdf.output('blob');
       
-      // Upload
       await supabaseService.uploadDocument(activeCaseId, docName, pdfBlob);
       
-      alert("Documento salvo e comprimido com sucesso!");
+      alert("Documento salvo com sucesso!");
       setIsScanning(false);
       setCapturedImages([]);
       setDocName('');
-      loadDocuments(); // Reload list
-    } catch (e) {
+      loadDocuments(); 
+    } catch (e: any) {
       console.error(e);
-      alert("Erro ao salvar documento.");
+      alert(`Erro ao salvar documento: ${e.message || e}`);
     } finally {
       setIsProcessing(false);
     }
@@ -176,7 +224,6 @@ export const StepModal: React.FC<StepModalProps> = ({
 
   if (!isOpen) return null;
 
-  // --- MODO ADICIONAR ETAPA ---
   if (isAdding && onAdd && stepsList) {
     return (
       <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
@@ -236,22 +283,15 @@ export const StepModal: React.FC<StepModalProps> = ({
     );
   }
 
-  // --- MODO DETALHES / EDIÇÃO ---
   if (!step) return null;
   
-  // Verificação de nome mais robusta (contém "documenta" ou "doc.")
   const isDocumentStep = step.label.toLowerCase().includes('documenta') || step.label.toLowerCase().includes('doc.');
-  
-  // REGRA DE PERMISSÃO:
-  // Admin: Pode tudo sempre.
-  // Cliente: Só pode gerenciar (scan/excluir) se a etapa NÃO estiver concluída (status != COMPLETED).
   const canManageDocs = isAdmin || step.status !== 'COMPLETED';
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto">
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in border border-red-900/20 dark:border-red-900/50 my-8">
         
-        {/* Header */}
         <div className="bg-red-950 dark:bg-slate-950 px-6 py-4 flex justify-between items-center border-b border-red-900 dark:border-slate-800">
           {isEditingLabel ? (
             <div className="flex gap-2 w-full mr-4">
@@ -313,8 +353,6 @@ export const StepModal: React.FC<StepModalProps> = ({
             </span>
           </div>
 
-          {/* --- ÁREA DE DOCUMENTOS (SCANNER) --- */}
-          {/* Agora mostra a seção mesmo se Supabase estiver offline, mas com aviso */}
           {isDocumentStep && (
             <div className="mb-6 border-b border-slate-200 dark:border-slate-700 pb-6">
               {!isSupabaseConfigured ? (
@@ -323,7 +361,7 @@ export const StepModal: React.FC<StepModalProps> = ({
                    <div>
                      <h4 className="text-sm font-bold text-amber-800 dark:text-amber-400">Scanner Indisponível</h4>
                      <p className="text-xs text-amber-700 dark:text-amber-500 mt-1">
-                       O sistema não detectou a conexão com o banco de dados (Supabase). A funcionalidade de salvar documentos na nuvem está desativada.
+                       O sistema não detectou a conexão com o banco de dados (Supabase).
                      </p>
                    </div>
                  </div>
@@ -334,7 +372,6 @@ export const StepModal: React.FC<StepModalProps> = ({
                        <div className="flex justify-between items-center mb-2">
                          <h4 className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2"><FileText className="w-4 h-4"/> Documentos Digitais</h4>
                          
-                         {/* Só mostra botão de digitalizar se tiver permissão (Admin sempre, Cliente só se não concluído) */}
                          {canManageDocs && (
                            <button 
                              onClick={() => setIsScanning(true)} 
@@ -365,7 +402,6 @@ export const StepModal: React.FC<StepModalProps> = ({
                                  <a href={doc.url} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-600 rounded" title="Baixar PDF">
                                    <Download className="w-4 h-4"/>
                                  </a>
-                                 {/* Botão de Excluir: Só aparece se tiver permissão */}
                                  {canManageDocs && (
                                    <button 
                                      onClick={() => handleDeleteDocument(doc)}
@@ -394,13 +430,9 @@ export const StepModal: React.FC<StepModalProps> = ({
                              onChange={(e) => setDocName(e.target.value)}
                           >
                             <option value="">Selecione...</option>
-                            <option value="RG e CPF">RG e CPF</option>
-                            <option value="Comprovante de Residência">Comprovante de Residência</option>
-                            <option value="Carteira de Trabalho">Carteira de Trabalho</option>
-                            <option value="Extrato CNIS">Extrato CNIS</option>
-                            <option value="Laudos Médicos">Laudos Médicos</option>
-                            <option value="Contrato de Honorários">Contrato de Honorários</option>
-                            <option value="Outros">Outros</option>
+                            {DOC_TYPES.map((type, idx) => (
+                              <option key={idx} value={type}>{type}</option>
+                            ))}
                           </select>
                         </div>
 
@@ -423,11 +455,26 @@ export const StepModal: React.FC<StepModalProps> = ({
                              />
                           </button>
                           
-                          <div className="bg-white dark:bg-slate-700 p-2 rounded border border-slate-200 dark:border-slate-600 overflow-y-auto max-h-32">
+                          <div className="bg-white dark:bg-slate-700 p-2 rounded border border-slate-200 dark:border-slate-600 overflow-y-auto max-h-48">
                              <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Páginas ({capturedImages.length})</p>
-                             <div className="grid grid-cols-3 gap-1">
+                             <div className="grid grid-cols-1 gap-2">
                                {capturedImages.map((img, i) => (
-                                 <img key={i} src={img} className="w-full h-10 object-cover rounded border" alt="pag" />
+                                 <div key={i} className="relative group">
+                                    <img src={img} className="w-full h-24 object-cover rounded border" alt="pag" />
+                                    {/* Controles de Edição */}
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                      <button onClick={() => rotateImage(i, 'left')} className="p-1 bg-white text-slate-800 rounded hover:bg-slate-200" title="Girar Esquerda">
+                                        <RotateCcw className="w-4 h-4"/>
+                                      </button>
+                                      <button onClick={() => removeImage(i)} className="p-1 bg-red-600 text-white rounded hover:bg-red-700" title="Remover">
+                                        <Trash2 className="w-4 h-4"/>
+                                      </button>
+                                      <button onClick={() => rotateImage(i, 'right')} className="p-1 bg-white text-slate-800 rounded hover:bg-slate-200" title="Girar Direita">
+                                        <RotateCw className="w-4 h-4"/>
+                                      </button>
+                                    </div>
+                                    <span className="absolute bottom-1 right-1 bg-black/50 text-white text-[10px] px-1 rounded">{i+1}</span>
+                                 </div>
                                ))}
                                {isProcessing && <div className="flex items-center justify-center h-10"><Loader2 className="w-4 h-4 animate-spin text-red-900"/></div>}
                              </div>
@@ -447,7 +494,7 @@ export const StepModal: React.FC<StepModalProps> = ({
                              className="px-3 py-1.5 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded flex items-center gap-1 disabled:opacity-50"
                           >
                             {isProcessing ? <Loader2 className="w-3 h-3 animate-spin"/> : <Save className="w-3 h-3"/>} 
-                            Salvar PDF
+                            Gerar PDF e Salvar
                           </button>
                         </div>
                       </div>
