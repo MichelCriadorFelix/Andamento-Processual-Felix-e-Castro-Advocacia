@@ -695,6 +695,173 @@ const App: React.FC = () => {
                   </div>
                 </div>
               )}
+
+              {/* --- CLIENT MANAGER VIEW --- */}
+              {view === 'CLIENT_MANAGER' && (
+                <div className="animate-fade-in">
+                  <div className="flex items-center mb-6">
+                     <button onClick={() => setView('DASHBOARD')} className="mr-4 p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700"><ChevronLeft className="w-5 h-5"/></button>
+                     <h2 className="text-2xl font-serif text-red-950 dark:text-red-100">Gerenciamento de Usuários</h2>
+                  </div>
+
+                  {/* Filter tabs */}
+                  <div className="flex gap-4 mb-6 border-b border-slate-200 dark:border-slate-700 pb-2">
+                     <button onClick={() => setUserFilter('ALL')} className={`px-4 py-2 font-bold text-sm ${userFilter === 'ALL' ? 'text-red-900 border-b-2 border-red-900' : 'text-slate-500'}`}>Todos</button>
+                     <button onClick={() => setUserFilter('TEAM')} className={`px-4 py-2 font-bold text-sm ${userFilter === 'TEAM' ? 'text-red-900 border-b-2 border-red-900' : 'text-slate-500'}`}>Equipe</button>
+                     <button onClick={() => setUserFilter('CLIENTS')} className={`px-4 py-2 font-bold text-sm ${userFilter === 'CLIENTS' ? 'text-red-900 border-b-2 border-red-900' : 'text-slate-500'}`}>Clientes</button>
+                  </div>
+
+                  <div className="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
+                     <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                       <thead className="bg-slate-50 dark:bg-slate-900">
+                         <tr>
+                           <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Nome</th>
+                           <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Função</th>
+                           <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Acesso</th>
+                           <th className="px-6 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Ações</th>
+                         </tr>
+                       </thead>
+                       <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+                         {currentUsers.map(user => (
+                           <tr key={user.id}>
+                             <td className="px-6 py-4 whitespace-nowrap">
+                                {editingUser?.id === user.id ? (
+                                   <input className="border p-1 rounded dark:bg-slate-700 dark:text-white" value={editingUser.name} onChange={e => setEditingUser({...editingUser, name: e.target.value})} />
+                                ) : (
+                                   <div className="flex flex-col">
+                                      <span className="text-sm font-medium text-slate-900 dark:text-white">{user.name}</span>
+                                      {user.whatsapp && <span className="text-xs text-slate-500 flex items-center gap-1"><MessageCircle className="w-3 h-3"/> {user.whatsapp}</span>}
+                                   </div>
+                                )}
+                             </td>
+                             <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
+                                {editingUser?.id === user.id && user.role === 'ADMIN' ? (
+                                   <select className="border p-1 rounded dark:bg-slate-700 dark:text-white" value={editingUser.jobTitle} onChange={e => setEditingUser({...editingUser, jobTitle: e.target.value})}>
+                                      <option value="Advogado(a)">Advogado(a)</option>
+                                      <option value="Secretário(a)">Secretário(a)</option>
+                                      <option value="Estagiário(a)">Estagiário(a)</option>
+                                      <option value="Paralegal">Paralegal</option>
+                                      <option value="Financeiro">Financeiro</option>
+                                      <option value="Outro">Outro</option>
+                                   </select>
+                                ) : (
+                                   user.role === 'ADMIN' ? (user.jobTitle || 'Advogado') : 'Cliente'
+                                )}
+                             </td>
+                             <td className="px-6 py-4 whitespace-nowrap">
+                                 {/* PIN editing logic */}
+                                 {editingUser?.id === user.id ? (
+                                    <input className="w-20 border p-1 rounded dark:bg-slate-700 dark:text-white" value={editingUser.pin} onChange={e => setEditingUser({...editingUser, pin: e.target.value})} />
+                                 ) : (
+                                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-slate-800">PIN: {user.pin}</span>
+                                 )}
+                                 {user.archived && <span className="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Bloqueado</span>}
+                             </td>
+                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                {editingUser?.id === user.id ? (
+                                   <div className="flex justify-end gap-2">
+                                      <button onClick={() => handleUpdateUser(editingUser)} className="text-green-600 hover:text-green-900"><CheckCheck className="w-5 h-5"/></button>
+                                      <button onClick={() => setEditingUser(null)} className="text-red-600 hover:text-red-900"><X className="w-5 h-5"/></button>
+                                   </div>
+                                ) : (
+                                   <div className="flex justify-end gap-2">
+                                      <button onClick={() => setEditingUser(user)} className="text-indigo-600 hover:text-indigo-900"><Edit className="w-4 h-4"/></button>
+                                      <button onClick={() => toggleArchiveUser(user)} className={`${user.archived ? 'text-green-600' : 'text-amber-600'} hover:opacity-80`} title={user.archived ? 'Desbloquear' : 'Bloquear'}>
+                                         {user.archived ? <Unlock className="w-4 h-4"/> : <Lock className="w-4 h-4"/>}
+                                      </button>
+                                      <button onClick={() => handleDeleteUser(user.id)} className="text-red-600 hover:text-red-900"><Trash2 className="w-4 h-4"/></button>
+                                   </div>
+                                )}
+                             </td>
+                           </tr>
+                         ))}
+                       </tbody>
+                     </table>
+                     {/* Pagination */}
+                     {totalPages > 1 && (
+                        <div className="flex justify-center p-4 gap-2 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700">
+                          <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="p-1 rounded disabled:opacity-50 hover:bg-slate-200 dark:hover:bg-slate-700 dark:text-white"><ChevronLeft className="w-4 h-4"/></button>
+                          <span className="text-sm py-1 dark:text-slate-300">Pág {currentPage} de {totalPages}</span>
+                          <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="p-1 rounded disabled:opacity-50 hover:bg-slate-200 dark:hover:bg-slate-700 dark:text-white"><ChevronRight className="w-4 h-4"/></button>
+                        </div>
+                      )}
+                  </div>
+                </div>
+              )}
+
+              {/* --- TEMPLATE MANAGER VIEW --- */}
+              {view === 'TEMPLATE_MANAGER' && (
+                <div className="animate-fade-in">
+                  <div className="flex items-center mb-6">
+                     <button onClick={() => setView('DASHBOARD')} className="mr-4 p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700"><ChevronLeft className="w-5 h-5"/></button>
+                     <h2 className="text-2xl font-serif text-red-950 dark:text-red-100">Gerenciador de Modelos</h2>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                     {/* Sidebar List */}
+                     <div className="bg-white dark:bg-slate-800 shadow rounded-lg p-4">
+                        <div className="mb-4 flex gap-2">
+                           <input className="w-full border p-2 text-sm rounded dark:bg-slate-700 dark:text-white" placeholder="Novo Modelo..." value={newTemplateName} onChange={e => setNewTemplateName(e.target.value)} />
+                           <button onClick={handleCreateTemplate} className="bg-red-950 text-white p-2 rounded"><Plus className="w-5 h-5"/></button>
+                        </div>
+                        <ul className="space-y-2">
+                           {templates.map(t => (
+                              <li key={t.id} onClick={() => setSelectedTemplate(t)} className={`p-3 rounded cursor-pointer flex justify-between items-center ${selectedTemplate?.id === t.id ? 'bg-red-50 dark:bg-red-900/30 border border-red-200' : 'hover:bg-slate-50 dark:hover:bg-slate-700'}`}>
+                                 <span className="text-sm font-medium dark:text-slate-200">{t.label}</span>
+                                 {!t.isSystem && <button onClick={(e) => {e.stopPropagation(); handleDeleteTemplate(t.id);}} className="text-red-400 hover:text-red-600"><Trash2 className="w-4 h-4"/></button>}
+                              </li>
+                           ))}
+                        </ul>
+                     </div>
+
+                     {/* Editor */}
+                     <div className="md:col-span-2 bg-white dark:bg-slate-800 shadow rounded-lg p-6">
+                        {selectedTemplate ? (
+                           <>
+                             <h3 className="text-lg font-bold text-red-950 dark:text-red-200 mb-4 pb-2 border-b">{selectedTemplate.label} <span className="text-xs font-normal text-slate-500 ml-2">{selectedTemplate.isSystem ? '(Sistema - Somente Leitura)' : '(Personalizado)'}</span></h3>
+                             
+                             <div className="space-y-4 mb-8">
+                                {selectedTemplate.steps.map((step, idx) => (
+                                   <div key={step.id} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded border border-slate-100 dark:border-slate-700">
+                                      <span className="bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-200 w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold">{idx + 1}</span>
+                                      <div className="flex-1">
+                                         <p className="text-sm font-bold dark:text-slate-200">{step.label}</p>
+                                         <p className="text-xs text-slate-500">Prazo: {step.expectedDuration} dias</p>
+                                      </div>
+                                      {!selectedTemplate.isSystem && (
+                                         <button onClick={() => handleDeleteTemplateStep(step.id)} className="text-red-400 hover:text-red-600"><X className="w-4 h-4"/></button>
+                                      )}
+                                   </div>
+                                ))}
+                             </div>
+
+                             {!selectedTemplate.isSystem && (
+                                <div className="bg-slate-50 dark:bg-slate-700/30 p-4 rounded border border-dashed border-slate-300">
+                                   <h4 className="text-sm font-bold mb-3 dark:text-slate-300">Adicionar Etapa</h4>
+                                   <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
+                                      <div className="md:col-span-2">
+                                         <label className="text-xs text-slate-500 block mb-1">Nome da Etapa</label>
+                                         <input className="w-full border p-2 text-sm rounded dark:bg-slate-700 dark:text-white" value={newTemplateStepLabel} onChange={e => setNewTemplateStepLabel(e.target.value)} />
+                                      </div>
+                                      <div>
+                                         <label className="text-xs text-slate-500 block mb-1">Prazo (Dias)</label>
+                                         <input type="number" className="w-full border p-2 text-sm rounded dark:bg-slate-700 dark:text-white" value={newTemplateStepDuration} onChange={e => setNewTemplateStepDuration(Number(e.target.value))} />
+                                      </div>
+                                      <button onClick={handleAddTemplateStep} className="bg-red-950 text-white p-2 text-sm font-bold rounded uppercase">Adicionar</button>
+                                   </div>
+                                </div>
+                             )}
+                           </>
+                        ) : (
+                           <div className="h-full flex flex-col items-center justify-center text-slate-400">
+                              <Settings className="w-12 h-12 mb-2 opacity-20"/>
+                              <p>Selecione um modelo para editar</p>
+                           </div>
+                        )}
+                     </div>
+                  </div>
+                </div>
+              )}
             </main>
             <FloatingSupport />
             <StepModal 

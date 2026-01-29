@@ -1,16 +1,19 @@
 
 -- ==============================================================================
--- ⚠️ CORREÇÃO URGENTE DO ERRO DE UPLOAD ("Row-Level Security Policy") ⚠️
---
--- COPIE E RODE ESTE BLOCO ABAIXO NO 'SQL EDITOR' DO SUPABASE PARA LIBERAR O ENVIO DE DOCUMENTOS.
+-- ⚠️ SCRIPT DE CORREÇÃO DE PERMISSÕES (RODE ISTO NO SQL EDITOR) ⚠️
 -- ==============================================================================
 
--- 1. Cria o bucket 'documents' como PÚBLICO (se não existir)
-INSERT INTO storage.buckets (id, name, public) 
-VALUES ('documents', 'documents', true)
-ON CONFLICT (id) DO UPDATE SET public = true;
+-- 1. Garante que o bucket 'documents' existe e é público (Sem dar erro se já existir)
+DO $$
+BEGIN
+    INSERT INTO storage.buckets (id, name, public)
+    VALUES ('documents', 'documents', true);
+EXCEPTION WHEN unique_violation THEN
+    -- Se já existe, garante que é público
+    UPDATE storage.buckets SET public = true WHERE id = 'documents';
+END $$;
 
--- 2. Limpa políticas antigas para evitar conflitos/duplicidade
+-- 2. Limpa políticas antigas para evitar conflitos
 DROP POLICY IF EXISTS "Acesso Total Documentos" ON storage.objects;
 DROP POLICY IF EXISTS "Public Access Documents" ON storage.objects;
 DROP POLICY IF EXISTS "Allow public uploads to documents" ON storage.objects;
