@@ -2,8 +2,8 @@
 import { createClient } from '@supabase/supabase-js';
 
 // --- CONFIGURAÇÃO DE SEGURANÇA ---
-// NUNCA deixe as chaves escritas aqui diretamente (Hardcoded).
-// Elas devem ser configuradas nas "Environment Variables" da Vercel ou no arquivo .env local.
+// O código abaixo tenta encontrar as chaves em todas as variações possíveis
+// que o Vercel costuma criar automaticamente.
 
 const getEnv = (key: string) => {
   // @ts-ignore
@@ -19,8 +19,17 @@ const getEnv = (key: string) => {
   return '';
 };
 
-const supabaseUrl = getEnv('VITE_SUPABASE_URL') || getEnv('NEXT_PUBLIC_SUPABASE_URL');
-const supabaseAnonKey = getEnv('VITE_SUPABASE_ANON_KEY') || getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+// Tenta encontrar a URL em várias opções comuns do Vercel
+const supabaseUrl = 
+  getEnv('VITE_SUPABASE_URL') || 
+  getEnv('NEXT_PUBLIC_SUPABASE_URL') || 
+  getEnv('VITE_SUPABASE_SUPABASE_URL'); // Nome específico do seu print
+
+// Tenta encontrar a Chave Anônima (Anon Key)
+const supabaseAnonKey = 
+  getEnv('VITE_SUPABASE_ANON_KEY') || 
+  getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY') || 
+  getEnv('VITE_SUPABASE_SUPABASE_ANON_KEY'); // Nome específico do seu print
 
 // Verifica se as chaves existem
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
