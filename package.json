@@ -14,7 +14,8 @@
     "lucide-react": "^0.563.0",
     "@supabase/supabase-js": "^2.93.2",
     "jspdf": "2.5.1",
-    "compressorjs": "1.2.1"
+    "compressorjs": "1.2.1",
+    "cropperjs": "1.6.1"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

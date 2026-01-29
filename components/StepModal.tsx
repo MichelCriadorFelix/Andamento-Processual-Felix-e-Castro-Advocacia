@@ -1,13 +1,15 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Step, LegalCase, CaseDocument } from '../types';
-import { X, Save, CheckSquare, Trash2, Edit2, Calendar, Camera, FileText, Download, Plus, Loader2, Image as ImageIcon, AlertTriangle, RotateCw, RotateCcw } from 'lucide-react';
+import { X, Save, CheckSquare, Trash2, Edit2, Calendar, Camera, FileText, Download, Plus, Loader2, Image as ImageIcon, AlertTriangle, RotateCw, RotateCcw, Scissors } from 'lucide-react';
 import { supabaseService } from '../services/supabaseService';
 import { isSupabaseConfigured } from '../lib/supabase';
 // @ts-ignore
 import jsPDF from 'jspdf';
 // @ts-ignore
 import Compressor from 'compressorjs';
+// @ts-ignore
+import Cropper from 'cropperjs';
 
 // Lista atualizada conforme pedido
 const DOC_TYPES = [
@@ -69,6 +71,11 @@ export const StepModal: React.FC<StepModalProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // States para Crop
+  const [cropIndex, setCropIndex] = useState<number | null>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const cropperRef = useRef<any>(null); // Instância do Cropper
+
   useEffect(() => {
     if (step) {
       setComment(step.adminComment || '');
@@ -80,6 +87,7 @@ export const StepModal: React.FC<StepModalProps> = ({
       setIsScanning(false);
       setCapturedImages([]);
       setDocName('');
+      setCropIndex(null); // Reset crop
 
       const isDocStep = step.label.toLowerCase().includes('documenta') || step.label.toLowerCase().includes('doc.');
       if (activeCaseId && isSupabaseConfigured && isDocStep) {
@@ -92,6 +100,36 @@ export const StepModal: React.FC<StepModalProps> = ({
       setInsertPosition('end');
     }
   }, [step, isAdding, isOpen, activeCaseId]);
+
+  // Inicializar Cropper quando cropIndex for definido
+  useEffect(() => {
+    if (cropIndex !== null && imageRef.current) {
+      // Pequeno delay para garantir que a imagem renderizou
+      setTimeout(() => {
+          if (imageRef.current) {
+              cropperRef.current = new Cropper(imageRef.current, {
+                viewMode: 1,
+                dragMode: 'move',
+                autoCropArea: 0.9,
+                restore: false,
+                guides: true,
+                center: true,
+                highlight: false,
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                toggleDragModeOnDblclick: false,
+              });
+          }
+      }, 100);
+    }
+
+    return () => {
+      if (cropperRef.current) {
+        cropperRef.current.destroy();
+        cropperRef.current = null;
+      }
+    };
+  }, [cropIndex]);
 
   const loadDocuments = async () => {
     if (!activeCaseId) return;
@@ -130,14 +168,12 @@ export const StepModal: React.FC<StepModalProps> = ({
     });
   };
 
-  // Função para girar a imagem na base64
   const rotateImage = (index: number, direction: 'left' | 'right') => {
     const imgData = capturedImages[index];
     const img = new Image();
     img.src = imgData;
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      // Inverte largura e altura
       canvas.width = img.height;
       canvas.height = img.width;
       const ctx = canvas.getContext('2d');
@@ -154,6 +190,21 @@ export const StepModal: React.FC<StepModalProps> = ({
         });
       }
     };
+  };
+
+  const confirmCrop = () => {
+    if (cropperRef.current && cropIndex !== null) {
+      const canvas = cropperRef.current.getCroppedCanvas();
+      if (canvas) {
+        const croppedBase64 = canvas.toDataURL('image/jpeg');
+        setCapturedImages(prev => {
+          const newArr = [...prev];
+          newArr[cropIndex] = croppedBase64;
+          return newArr;
+        });
+        setCropIndex(null); // Fecha o editor
+      }
+    }
   };
 
   const removeImage = (index: number) => {
@@ -228,12 +279,14 @@ export const StepModal: React.FC<StepModalProps> = ({
     return (
       <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
         <div className="bg-white dark:bg-slate-800 rounded-lg shadow-2xl w-full max-w-md animate-fade-in border border-red-900/20">
+          {/* ... Conteúdo Adicionar (Manteve igual) ... */}
           <div className="bg-red-950 dark:bg-slate-950 px-6 py-4 border-b border-red-900 dark:border-slate-800 flex justify-between items-center">
             <h3 className="text-white font-serif font-medium text-lg">Adicionar Nova Etapa</h3>
             <button onClick={onClose} className="text-red-200 hover:text-white"><X className="w-5 h-5" /></button>
           </div>
           <div className="p-6 space-y-4">
-            <div>
+             {/* Form fields */}
+             <div>
               <label className="block text-sm font-bold text-slate-600 dark:text-slate-400 mb-1">Nome da Etapa</label>
               <input 
                 className="w-full border p-2 rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
@@ -292,6 +345,7 @@ export const StepModal: React.FC<StepModalProps> = ({
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto">
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in border border-red-900/20 dark:border-red-900/50 my-8">
         
+        {/* HEADER */}
         <div className="bg-red-950 dark:bg-slate-950 px-6 py-4 flex justify-between items-center border-b border-red-900 dark:border-slate-800">
           {isEditingLabel ? (
             <div className="flex gap-2 w-full mr-4">
@@ -342,7 +396,32 @@ export const StepModal: React.FC<StepModalProps> = ({
           </div>
         </div>
         
-        <div className="p-6">
+        <div className="p-6 relative">
+          {/* EDITOR DE CROP (OVERLAY) */}
+          {cropIndex !== null && (
+            <div className="absolute inset-0 z-50 bg-slate-900 flex flex-col">
+              <div className="flex-1 overflow-hidden bg-black flex items-center justify-center p-4">
+                {/* A imagem original a ser cortada */}
+                <img 
+                   ref={imageRef}
+                   src={capturedImages[cropIndex]} 
+                   alt="Crop target" 
+                   className="max-h-full max-w-full"
+                   style={{ display: 'block', maxWidth: '100%' }}
+                />
+              </div>
+              <div className="p-4 bg-slate-800 flex justify-between items-center border-t border-slate-700">
+                 <button onClick={() => setCropIndex(null)} className="text-white font-bold text-sm px-4 py-2 hover:bg-slate-700 rounded">Cancelar</button>
+                 <button 
+                   onClick={confirmCrop}
+                   className="bg-green-600 text-white font-bold text-sm px-4 py-2 rounded flex items-center gap-2 hover:bg-green-700"
+                 >
+                   <CheckSquare className="w-4 h-4"/> Confirmar Recorte
+                 </button>
+              </div>
+            </div>
+          )}
+
           <div className="mb-4 flex justify-between items-center">
              <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold tracking-wide ${
               step.status === 'COMPLETED' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' :
@@ -466,9 +545,16 @@ export const StepModal: React.FC<StepModalProps> = ({
                                       <button onClick={() => rotateImage(i, 'left')} className="p-1 bg-white text-slate-800 rounded hover:bg-slate-200" title="Girar Esquerda">
                                         <RotateCcw className="w-4 h-4"/>
                                       </button>
+                                      
+                                      {/* BOTÃO DE CROP (CORTAR) */}
+                                      <button onClick={() => setCropIndex(i)} className="p-1 bg-blue-600 text-white rounded hover:bg-blue-700" title="Cortar Imagem">
+                                        <Scissors className="w-4 h-4"/>
+                                      </button>
+
                                       <button onClick={() => removeImage(i)} className="p-1 bg-red-600 text-white rounded hover:bg-red-700" title="Remover">
                                         <Trash2 className="w-4 h-4"/>
                                       </button>
+
                                       <button onClick={() => rotateImage(i, 'right')} className="p-1 bg-white text-slate-800 rounded hover:bg-slate-200" title="Girar Direita">
                                         <RotateCw className="w-4 h-4"/>
                                       </button>
