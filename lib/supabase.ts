@@ -1,14 +1,10 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// --- ÁREA DE CONFIGURAÇÃO DE EMERGÊNCIA ---
-// 1. URL do Projeto (Configurada)
-// 2. Chave Publicável (Configurada manualmente abaixo)
+// --- CONFIGURAÇÃO DE SEGURANÇA ---
+// NUNCA deixe as chaves escritas aqui diretamente (Hardcoded).
+// Elas devem ser configuradas nas "Environment Variables" da Vercel ou no arquivo .env local.
 
-const MANUAL_SUPABASE_URL = "https://ysdaithcdnmqvvfwrhit.supabase.co"; 
-const MANUAL_SUPABASE_ANON_KEY = "sb_publishable_a4LJwyRVaCWUoBAhH3tm6Q_hhehoJha"; // Chave de API Configurada
-
-// Tenta obter as variáveis de ambiente de diferentes fontes (Prioridade: Manual > Vite > Next.js)
 const getEnv = (key: string) => {
   // @ts-ignore
   if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
@@ -23,11 +19,15 @@ const getEnv = (key: string) => {
   return '';
 };
 
-const supabaseUrl = MANUAL_SUPABASE_URL || getEnv('VITE_SUPABASE_URL') || getEnv('NEXT_PUBLIC_SUPABASE_URL');
-const supabaseAnonKey = MANUAL_SUPABASE_ANON_KEY || getEnv('VITE_SUPABASE_ANON_KEY') || getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+const supabaseUrl = getEnv('VITE_SUPABASE_URL') || getEnv('NEXT_PUBLIC_SUPABASE_URL');
+const supabaseAnonKey = getEnv('VITE_SUPABASE_ANON_KEY') || getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY');
 
 // Verifica se as chaves existem
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
+
+if (!isSupabaseConfigured) {
+  console.warn("⚠️ ALERTA DE SEGURANÇA: Supabase não conectado. As chaves de API não foram encontradas nas variáveis de ambiente.");
+}
 
 export const supabase = isSupabaseConfigured 
   ? createClient(supabaseUrl, supabaseAnonKey) 

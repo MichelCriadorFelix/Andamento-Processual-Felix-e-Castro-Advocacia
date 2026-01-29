@@ -145,8 +145,17 @@ export const StepModal: React.FC<StepModalProps> = ({
 
     setIsProcessing(true);
     let processedCount = 0;
+    let hasInvalidFile = false;
 
     Array.from(files).forEach(file => {
+      // SEGURANÇA: Validação de Tipo de Arquivo
+      if (!file.type.match('image.*')) {
+        hasInvalidFile = true;
+        processedCount++; // Conta como processado para não travar o loader
+        if (processedCount === files.length) setIsProcessing(false);
+        return;
+      }
+
       new Compressor(file, {
         quality: 0.7,
         maxWidth: 1600,
@@ -166,6 +175,10 @@ export const StepModal: React.FC<StepModalProps> = ({
         },
       });
     });
+
+    if (hasInvalidFile) {
+      alert("Atenção: Alguns arquivos foram ignorados pois não são imagens. Por segurança, apenas fotos são permitidas.");
+    }
   };
 
   const rotateImage = (index: number, direction: 'left' | 'right') => {
@@ -254,7 +267,6 @@ export const StepModal: React.FC<StepModalProps> = ({
       else if (e?.error && typeof e.error === 'string') errorMsg = e.error;
       else errorMsg = JSON.stringify(e);
 
-      // Dicas úteis baseadas no erro
       if (errorMsg.toLowerCase().includes("security") || errorMsg.toLowerCase().includes("policy")) {
          errorMsg = "ERRO DE PERMISSÃO NO SUPABASE (RLS)\n\n" +
                     "O banco de dados recusou o arquivo por segurança.\n" +
