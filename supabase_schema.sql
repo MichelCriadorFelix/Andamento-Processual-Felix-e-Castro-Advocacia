@@ -1,9 +1,37 @@
 
+-- ==============================================================================
+-- ⚠️ CORREÇÃO URGENTE DO ERRO DE UPLOAD ("Row-Level Security Policy") ⚠️
+--
+-- COPIE E RODE ESTE BLOCO ABAIXO NO 'SQL EDITOR' DO SUPABASE PARA LIBERAR O ENVIO DE DOCUMENTOS.
+-- ==============================================================================
+
+-- 1. Cria o bucket 'documents' como PÚBLICO (se não existir)
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('documents', 'documents', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- 2. Limpa políticas antigas para evitar conflitos/duplicidade
+DROP POLICY IF EXISTS "Acesso Total Documentos" ON storage.objects;
+DROP POLICY IF EXISTS "Public Access Documents" ON storage.objects;
+DROP POLICY IF EXISTS "Allow public uploads to documents" ON storage.objects;
+
+-- 3. Cria a política que libera TUDO (Upload, Download, Delete) para o bucket 'documents'
+CREATE POLICY "Acesso Total Documentos"
+ON storage.objects FOR ALL
+TO public
+USING (bucket_id = 'documents')
+WITH CHECK (bucket_id = 'documents');
+
+-- ==============================================================================
+-- FIM DA CORREÇÃO DE STORAGE
+-- O restante abaixo é a estrutura do banco de dados (Tabelas)
+-- ==============================================================================
+
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Profiles table
-CREATE TABLE public.profiles (
+CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   name TEXT NOT NULL,
   role TEXT CHECK (role IN ('ADMIN', 'CLIENT')) DEFAULT 'CLIENT',
@@ -14,15 +42,15 @@ CREATE TABLE public.profiles (
 );
 
 -- Templates table (New)
-CREATE TABLE public.templates (
-  id TEXT PRIMARY KEY, -- Using TEXT to allow 'ADMINISTRATIVO_PREVIDENCIARIO' readable IDs, or UUIDs for custom
+CREATE TABLE IF NOT EXISTS public.templates (
+  id TEXT PRIMARY KEY,
   label TEXT NOT NULL,
   is_system BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 -- Template Steps table (New)
-CREATE TABLE public.template_steps (
+CREATE TABLE IF NOT EXISTS public.template_steps (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   template_id TEXT REFERENCES public.templates(id) ON DELETE CASCADE,
   label TEXT NOT NULL,
@@ -32,20 +60,21 @@ CREATE TABLE public.template_steps (
 );
 
 -- Cases table (Added template_id)
-CREATE TABLE public.cases (
+CREATE TABLE IF NOT EXISTS public.cases (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   client_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
-  template_id TEXT REFERENCES public.templates(id), -- Link to template
+  template_id TEXT REFERENCES public.templates(id),
   title TEXT NOT NULL,
-  case_type TEXT NOT NULL, -- Keep for legacy or extra filtering
+  case_type TEXT NOT NULL,
   benefit_type TEXT, 
   status TEXT CHECK (status IN ('ACTIVE', 'CONCLUDED', 'MOVED_TO_JUDICIAL')) DEFAULT 'ACTIVE',
   start_date DATE DEFAULT CURRENT_DATE,
+  responsible_lawyer TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 -- Steps table
-CREATE TABLE public.steps (
+CREATE TABLE IF NOT EXISTS public.steps (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   case_id UUID REFERENCES public.cases(id) ON DELETE CASCADE,
   label TEXT NOT NULL,
@@ -57,6 +86,7 @@ CREATE TABLE public.steps (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- Desativa RLS nas tabelas principais para facilitar acesso inicial (opcional, mas recomendado para este app simples)
 ALTER TABLE public.profiles DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cases DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.steps DISABLE ROW LEVEL SECURITY;

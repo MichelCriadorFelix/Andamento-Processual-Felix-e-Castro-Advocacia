@@ -118,7 +118,7 @@ export const StepModal: React.FC<StepModalProps> = ({
                 cropBoxMovable: true,
                 cropBoxResizable: true,
                 toggleDragModeOnDblclick: false,
-              });
+              } as any);
           }
       }, 100);
     }
@@ -255,13 +255,16 @@ export const StepModal: React.FC<StepModalProps> = ({
       else errorMsg = JSON.stringify(e);
 
       // Dicas úteis baseadas no erro
-      if (errorMsg.toLowerCase().includes("bucket") || errorMsg.toLowerCase().includes("not found")) {
-         errorMsg += "\n\nDICA: O bucket 'documents' pode não existir no Supabase. Crie um bucket público chamado 'documents'.";
-      } else if (errorMsg.toLowerCase().includes("security") || errorMsg.toLowerCase().includes("policy")) {
-         errorMsg += "\n\nDICA: Erro de Permissão (RLS). Verifique as Policies do Storage no Supabase para permitir uploads.";
+      if (errorMsg.toLowerCase().includes("security") || errorMsg.toLowerCase().includes("policy")) {
+         errorMsg = "ERRO DE PERMISSÃO NO SUPABASE (RLS)\n\n" +
+                    "O banco de dados recusou o arquivo por segurança.\n" +
+                    "Isso NÃO tem a ver com o conteúdo do documento.\n\n" +
+                    "COMO RESOLVER:\n" +
+                    "1. Vá no painel do Supabase -> SQL Editor\n" +
+                    "2. Copie e rode o código de correção que está no topo do arquivo 'supabase_schema.sql'.";
       }
 
-      alert(`FALHA NO UPLOAD:\n${errorMsg}`);
+      alert(`FALHA NO UPLOAD:\n\n${errorMsg}`);
     } finally {
       setIsProcessing(false);
     }
