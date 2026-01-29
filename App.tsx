@@ -818,7 +818,7 @@ const App: React.FC = () => {
                      <div className="md:col-span-2 bg-white dark:bg-slate-800 shadow rounded-lg p-6">
                         {selectedTemplate ? (
                            <>
-                             <h3 className="text-lg font-bold text-red-950 dark:text-red-200 mb-4 pb-2 border-b">{selectedTemplate.label} <span className="text-xs font-normal text-slate-500 ml-2">{selectedTemplate.isSystem ? '(Sistema - Somente Leitura)' : '(Personalizado)'}</span></h3>
+                             <h3 className="text-lg font-bold text-red-950 dark:text-red-200 mb-4 pb-2 border-b">{selectedTemplate.label} <span className="text-xs font-normal text-slate-500 ml-2">{selectedTemplate.isSystem ? '(Sistema - Padrão)' : '(Personalizado)'}</span></h3>
                              
                              <div className="space-y-4 mb-8">
                                 {selectedTemplate.steps.map((step, idx) => (
@@ -828,29 +828,25 @@ const App: React.FC = () => {
                                          <p className="text-sm font-bold dark:text-slate-200">{step.label}</p>
                                          <p className="text-xs text-slate-500">Prazo: {step.expectedDuration} dias</p>
                                       </div>
-                                      {!selectedTemplate.isSystem && (
-                                         <button onClick={() => handleDeleteTemplateStep(step.id)} className="text-red-400 hover:text-red-600"><X className="w-4 h-4"/></button>
-                                      )}
+                                      <button onClick={() => handleDeleteTemplateStep(step.id)} className="text-red-400 hover:text-red-600"><X className="w-4 h-4"/></button>
                                    </div>
                                 ))}
                              </div>
 
-                             {!selectedTemplate.isSystem && (
-                                <div className="bg-slate-50 dark:bg-slate-700/30 p-4 rounded border border-dashed border-slate-300">
-                                   <h4 className="text-sm font-bold mb-3 dark:text-slate-300">Adicionar Etapa</h4>
-                                   <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
-                                      <div className="md:col-span-2">
-                                         <label className="text-xs text-slate-500 block mb-1">Nome da Etapa</label>
-                                         <input className="w-full border p-2 text-sm rounded dark:bg-slate-700 dark:text-white" value={newTemplateStepLabel} onChange={e => setNewTemplateStepLabel(e.target.value)} />
-                                      </div>
-                                      <div>
-                                         <label className="text-xs text-slate-500 block mb-1">Prazo (Dias)</label>
-                                         <input type="number" className="w-full border p-2 text-sm rounded dark:bg-slate-700 dark:text-white" value={newTemplateStepDuration} onChange={e => setNewTemplateStepDuration(Number(e.target.value))} />
-                                      </div>
-                                      <button onClick={handleAddTemplateStep} className="bg-red-950 text-white p-2 text-sm font-bold rounded uppercase">Adicionar</button>
+                             <div className="bg-slate-50 dark:bg-slate-700/30 p-4 rounded border border-dashed border-slate-300">
+                                <h4 className="text-sm font-bold mb-3 dark:text-slate-300">Adicionar Etapa</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
+                                   <div className="md:col-span-2">
+                                      <label className="text-xs text-slate-500 block mb-1">Nome da Etapa</label>
+                                      <input className="w-full border p-2 text-sm rounded dark:bg-slate-700 dark:text-white" value={newTemplateStepLabel} onChange={e => setNewTemplateStepLabel(e.target.value)} />
                                    </div>
+                                   <div>
+                                      <label className="text-xs text-slate-500 block mb-1">Prazo (Dias)</label>
+                                      <input type="number" className="w-full border p-2 text-sm rounded dark:bg-slate-700 dark:text-white" value={newTemplateStepDuration} onChange={e => setNewTemplateStepDuration(Number(e.target.value))} />
+                                   </div>
+                                   <button onClick={handleAddTemplateStep} className="bg-red-950 text-white p-2 text-sm font-bold rounded uppercase">Adicionar</button>
                                 </div>
-                             )}
+                             </div>
                            </>
                         ) : (
                            <div className="h-full flex flex-col items-center justify-center text-slate-400">
