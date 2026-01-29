@@ -1,6 +1,6 @@
 
 import { supabase } from '../lib/supabase';
-import { User, LegalCase, LoginCredentials, CaseType, Step, BenefitType, CaseStatus, CaseTemplate, TemplateStep } from '../types';
+import { User, LegalCase, LoginCredentials, CaseType, Step, BenefitType, CaseStatus, CaseTemplate, TemplateStep, CaseDocument } from '../types';
 import { ADMIN_NAMES } from '../constants';
 
 const mapCaseFromDB = (dbCase: any, dbSteps: any[], dbClient: any): LegalCase => {
@@ -401,5 +401,41 @@ export const supabaseService = {
     }
 
     return newCase;
+  },
+
+  // --- DOCUMENTS ---
+  uploadDocument: async (caseId: string, fileName: string, fileBlob: Blob) => {
+    if (!supabase) return;
+    const sanitizedName = fileName.replace(/[^a-zA-Z0-9]/g, '_');
+    const path = `${caseId}/${Date.now()}_${sanitizedName}.pdf`;
+
+    const { data, error } = await supabase.storage
+      .from('documents')
+      .upload(path, fileBlob, {
+        contentType: 'application/pdf',
+        upsert: false
+      });
+
+    if (error) throw error;
+    return data;
+  },
+
+  getDocuments: async (caseId: string): Promise<CaseDocument[]> => {
+     if (!supabase) return [];
+     const { data, error } = await supabase.storage
+       .from('documents')
+       .list(caseId, { limit: 100, sortBy: { column: 'created_at', order: 'desc' } });
+     
+     if (error) return [];
+
+     return data.map(f => {
+       const { data: publicUrl } = supabase.storage.from('documents').getPublicUrl(`${caseId}/${f.name}`);
+       return {
+         name: f.name,
+         url: publicUrl.publicUrl,
+         created_at: f.created_at,
+         size: f.metadata?.size
+       };
+     });
   }
 };

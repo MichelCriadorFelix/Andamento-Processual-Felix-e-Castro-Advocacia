@@ -78,3 +78,10 @@ export interface CaseTemplate {
   steps: TemplateStep[];
   isSystem?: boolean; // Se true, são os padrões do sistema (Previdenciário/Trabalhista)
 }
+
+export interface CaseDocument {
+  name: string;
+  url: string;
+  created_at: string;
+  size?: number;
+}
