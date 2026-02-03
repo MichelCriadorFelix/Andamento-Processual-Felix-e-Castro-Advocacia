@@ -315,6 +315,17 @@ export const supabaseService = {
             .eq('id', nextStep.id);
         }
       }
+    } else if (action === 'REOPEN') {
+       // Nova Lógica: Ao reabrir, bloquear todos os passos seguintes
+       const { data: currentStep } = await supabase.from('steps').select('step_order').eq('id', stepId).single();
+
+       if (currentStep) {
+         await supabase
+           .from('steps')
+           .update({ status: 'LOCKED', completed_date: null }) 
+           .eq('case_id', caseId)
+           .gt('step_order', currentStep.step_order);
+       }
     }
   },
 

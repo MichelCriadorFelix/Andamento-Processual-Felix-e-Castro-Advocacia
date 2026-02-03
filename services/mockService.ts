@@ -205,6 +205,16 @@ export const mockService = {
       } else if (action === 'REOPEN') {
         currentStep.status = 'CURRENT';
         currentStep.completedDate = undefined;
+        
+        // Lock subsequent steps logic:
+        // Todas as etapas DEPOIS desta voltam para LOCKED e perdem a data de conclusão
+        for (let i = stepIndex + 1; i < newSteps.length; i++) {
+            newSteps[i] = { 
+              ...newSteps[i], 
+              status: 'LOCKED', 
+              completedDate: undefined // Remove a data pois foi "cancelado" indiretamente
+            };
+        }
       }
 
       newSteps[stepIndex] = currentStep;
