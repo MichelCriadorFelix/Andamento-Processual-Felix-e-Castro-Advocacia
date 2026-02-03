@@ -277,7 +277,7 @@ export const supabaseService = {
     return newCase;
   },
 
-  updateStep: async (caseId: string, stepId: string, comment: string | null, action: 'COMPLETE' | 'COMMENT_ONLY' | 'UPDATE_LABEL', newLabel?: string, completionDate?: string, newDuration?: number) => {
+  updateStep: async (caseId: string, stepId: string, comment: string | null, action: 'COMPLETE' | 'COMMENT_ONLY' | 'UPDATE_LABEL' | 'REOPEN', newLabel?: string, completionDate?: string, newDuration?: number) => {
     if (!supabase) return;
 
     const updates: any = {};
@@ -288,6 +288,9 @@ export const supabaseService = {
     if (action === 'COMPLETE') {
       updates.status = 'COMPLETED';
       updates.completed_date = completionDate || new Date();
+    } else if (action === 'REOPEN') {
+      updates.status = 'CURRENT';
+      updates.completed_date = null;
     }
 
     await supabase.from('steps').update(updates).eq('id', stepId);

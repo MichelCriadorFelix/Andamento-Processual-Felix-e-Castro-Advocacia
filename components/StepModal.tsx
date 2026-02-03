@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Step, LegalCase, CaseDocument, User } from '../types';
-import { X, Save, CheckSquare, Trash2, Edit2, Calendar, Camera, FileText, Download, Plus, Loader2, Image as ImageIcon, AlertTriangle, RotateCw, RotateCcw, Scissors, UploadCloud, UserCheck } from 'lucide-react';
+import { X, Save, CheckSquare, Trash2, Edit2, Calendar, Camera, FileText, Download, Plus, Loader2, Image as ImageIcon, AlertTriangle, RotateCw, RotateCcw, Scissors, UploadCloud, UserCheck, RefreshCcw } from 'lucide-react';
 import { supabaseService } from '../services/supabaseService';
 import { isSupabaseConfigured } from '../lib/supabase';
 // @ts-ignore
@@ -44,6 +44,7 @@ interface StepModalProps {
   isAdmin: boolean;
   currentUser?: User | null; // Adicionado para auditoria
   onUpdate?: (comment: string, complete: boolean, completionDate?: string) => void;
+  onReopen?: () => void; // Novo callback para reabrir
   onDelete?: () => void;
   onRename?: (newLabel: string, newDuration?: number) => void;
   isAdding?: boolean; 
@@ -53,7 +54,7 @@ interface StepModalProps {
 }
 
 export const StepModal: React.FC<StepModalProps> = ({ 
-  step, isOpen, onClose, isAdmin, currentUser, onUpdate, onDelete, onRename, 
+  step, isOpen, onClose, isAdmin, currentUser, onUpdate, onReopen, onDelete, onRename, 
   isAdding, stepsList, onAdd, activeCaseId
 }) => {
   const [comment, setComment] = useState('');
@@ -668,6 +669,19 @@ export const StepModal: React.FC<StepModalProps> = ({
                 </p>
               </div>
             )}
+            
+            {/* Aviso quando completado */}
+            {step.status === 'COMPLETED' && (
+               <div className="bg-green-50 dark:bg-green-900/20 p-3 border border-green-200 dark:border-green-800 rounded flex items-center">
+                 <CheckSquare className="w-5 h-5 text-green-600 dark:text-green-500 mr-2" />
+                 <div>
+                    <p className="text-sm font-bold text-green-800 dark:text-green-300">Etapa Concluída</p>
+                    <p className="text-xs text-green-700 dark:text-green-400">
+                      Em: {new Date(step.completedDate || '').toLocaleDateString()}
+                    </p>
+                 </div>
+               </div>
+            )}
           </div>
         </div>
 
@@ -676,14 +690,19 @@ export const StepModal: React.FC<StepModalProps> = ({
           
           {isAdmin && (
             <>
-              <button 
-                onClick={handleGeneralSave}
-                className="flex items-center px-4 py-2 bg-white dark:bg-slate-800 border border-red-900 dark:border-slate-500 text-red-900 dark:text-slate-300 rounded-none text-sm font-bold uppercase tracking-wider"
-              >
-                <Save className="w-4 h-4 mr-2" /> Salvar
-              </button>
-              
-              {step.status !== 'COMPLETED' && (
+              {step.status === 'COMPLETED' ? (
+                <button 
+                  onClick={() => {
+                    if (onReopen && confirm("Deseja reabrir esta etapa? Ela voltará para 'Em Andamento'.")) {
+                      onReopen();
+                      onClose();
+                    }
+                  }}
+                  className="flex items-center px-4 py-2 bg-amber-500 text-white border border-amber-600 rounded-none text-sm font-bold uppercase tracking-wider hover:bg-amber-600 shadow-md"
+                >
+                  <RefreshCcw className="w-4 h-4 mr-2" /> Desfazer / Reabrir
+                </button>
+              ) : (
                 <button 
                   onClick={() => {
                     if (onUpdate) onUpdate(comment, true, completionDate);
@@ -694,6 +713,13 @@ export const StepModal: React.FC<StepModalProps> = ({
                   <CheckSquare className="w-4 h-4 mr-2" /> Concluir Etapa
                 </button>
               )}
+
+              <button 
+                onClick={handleGeneralSave}
+                className="flex items-center px-4 py-2 bg-white dark:bg-slate-800 border border-red-900 dark:border-slate-500 text-red-900 dark:text-slate-300 rounded-none text-sm font-bold uppercase tracking-wider"
+              >
+                <Save className="w-4 h-4 mr-2" /> Salvar Comentário
+              </button>
             </>
           )}
         </div>

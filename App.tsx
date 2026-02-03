@@ -879,6 +879,19 @@ const App: React.FC = () => {
                   setRefreshKey(k => k+1); 
                 }
               }}
+              onReopen={async () => {
+                 if(activeCase && activeStep) {
+                    await api.updateStep(activeCase.id, activeStep.id, null, 'REOPEN');
+                     // Força atualização da interface
+                    if (currentUser.role === 'ADMIN') {
+                       const updatedCases = await api.getAllCases();
+                       setCases(updatedCases);
+                       const updatedActive = updatedCases.find(ca => ca.id === activeCase.id);
+                       if (updatedActive) setActiveCase(updatedActive);
+                    }
+                    setRefreshKey(k => k+1); 
+                 }
+              }}
               onDelete={async () => { if(activeCase && activeStep && (api as any).deleteStep) { await (api as any).deleteStep(activeStep.id); setActiveStep(null); setRefreshKey(k => k+1); }}}
               onRename={async (l, d) => { if(activeCase && activeStep) { await api.updateStep(activeCase.id, activeStep.id, null, 'UPDATE_LABEL', l, undefined, d); setRefreshKey(k => k+1); }}}
             />

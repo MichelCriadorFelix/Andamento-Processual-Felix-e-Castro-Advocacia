@@ -183,7 +183,7 @@ export const mockService = {
     return newCase;
   },
 
-  updateStep: (caseId: string, stepId: string, comment: string | null, action: 'COMPLETE' | 'COMMENT_ONLY' | 'UPDATE_LABEL', newLabel?: string, completionDate?: string, newDuration?: number) => {
+  updateStep: (caseId: string, stepId: string, comment: string | null, action: 'COMPLETE' | 'COMMENT_ONLY' | 'UPDATE_LABEL' | 'REOPEN', newLabel?: string, completionDate?: string, newDuration?: number) => {
     cases = cases.map(c => {
       if (c.id !== caseId) return c;
       const stepIndex = c.steps.findIndex(s => s.id === stepId);
@@ -202,6 +202,9 @@ export const mockService = {
         if (stepIndex + 1 < newSteps.length) {
           newSteps[stepIndex + 1] = { ...newSteps[stepIndex + 1], status: 'CURRENT' };
         }
+      } else if (action === 'REOPEN') {
+        currentStep.status = 'CURRENT';
+        currentStep.completedDate = undefined;
       }
 
       newSteps[stepIndex] = currentStep;
