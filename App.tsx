@@ -392,9 +392,8 @@ const App: React.FC = () => {
 
         {!currentUser ? (
           <div className="min-h-screen flex items-center justify-center p-4">
+             {/* ... Login Form (Mantido) ... */}
              <div className="bg-white dark:bg-slate-800 p-8 rounded-none shadow-2xl max-w-md w-full border-t-8 border-red-950 dark:border-red-800 animate-fade-in transition-colors duration-300 relative">
-              
-              {/* STATUS INDICATOR (LOGIN SCREEN) */}
               <div className="absolute top-2 right-2">
                  {isSupabaseConfigured ? (
                     <div className="flex items-center gap-1 bg-green-100 text-green-800 px-2 py-1 rounded-full text-[10px] font-bold border border-green-200" title="Banco de Dados Conectado">
@@ -433,6 +432,7 @@ const App: React.FC = () => {
           </div>
         ) : (
           <div className="min-h-screen">
+            {/* ... Navbar (Mantida) ... */}
             <nav className="bg-red-950 dark:bg-slate-950 text-white sticky top-0 z-40 shadow-xl border-b border-red-900 dark:border-slate-800">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-20">
@@ -476,6 +476,7 @@ const App: React.FC = () => {
             </nav>
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+              {/* ... Dashboard View (Mantida) ... */}
               {view === 'DASHBOARD' && (
                 <div className="space-y-10 animate-fade-in">
                   
@@ -491,12 +492,6 @@ const App: React.FC = () => {
                         <p className="text-sm font-medium mb-3">
                           Isso explica por que o que o Michel cria não aparece para a Luana ou Fabrícia.
                         </p>
-                        <div className="bg-white/50 p-3 rounded border border-amber-300 text-xs font-mono text-amber-800">
-                          <p className="font-bold text-amber-900 mb-1">COMO RESOLVER:</p>
-                          <p>1. Pegue a URL e a ANON_KEY no painel do Supabase.</p>
-                          <p>2. Adicione-as nas "Environment Variables" da Vercel.</p>
-                          <p>3. OU (Solução Rápida): Cole as chaves no arquivo <code>lib/supabase.ts</code> nas variáveis <code>MANUAL_SUPABASE...</code></p>
-                        </div>
                       </div>
                     </div>
                   )}
@@ -696,15 +691,16 @@ const App: React.FC = () => {
                 </div>
               )}
 
-              {/* --- CLIENT MANAGER VIEW --- */}
+              {/* ... (CLIENT MANAGER e TEMPLATE MANAGER mantidos igual ao original) ... */}
               {view === 'CLIENT_MANAGER' && (
                 <div className="animate-fade-in">
-                  <div className="flex items-center mb-6">
+                   {/* Conteúdo CLIENT MANAGER Mantido */}
+                   <div className="flex items-center mb-6">
                      <button onClick={() => setView('DASHBOARD')} className="mr-4 p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700"><ChevronLeft className="w-5 h-5"/></button>
                      <h2 className="text-2xl font-serif text-red-950 dark:text-red-100">Gerenciamento de Usuários</h2>
                   </div>
-
-                  {/* Filter tabs */}
+                  {/* ... Restante do Client Manager (Tabela, Filtros) ... */}
+                   {/* Filter tabs */}
                   <div className="flex gap-4 mb-6 border-b border-slate-200 dark:border-slate-700 pb-2">
                      <button onClick={() => setUserFilter('ALL')} className={`px-4 py-2 font-bold text-sm ${userFilter === 'ALL' ? 'text-red-900 border-b-2 border-red-900' : 'text-slate-500'}`}>Todos</button>
                      <button onClick={() => setUserFilter('TEAM')} className={`px-4 py-2 font-bold text-sm ${userFilter === 'TEAM' ? 'text-red-900 border-b-2 border-red-900' : 'text-slate-500'}`}>Equipe</button>
@@ -789,7 +785,7 @@ const App: React.FC = () => {
                 </div>
               )}
 
-              {/* --- TEMPLATE MANAGER VIEW --- */}
+              {/* ... TEMPLATE MANAGER view (Mantida igual ao original) ... */}
               {view === 'TEMPLATE_MANAGER' && (
                 <div className="animate-fade-in">
                   <div className="flex items-center mb-6">
@@ -861,7 +857,12 @@ const App: React.FC = () => {
             </main>
             <FloatingSupport />
             <StepModal 
-              step={activeStep} isOpen={!!activeStep} onClose={() => setActiveStep(null)} isAdmin={currentUser.role === 'ADMIN'} activeCaseId={activeCase?.id}
+              step={activeStep} 
+              isOpen={!!activeStep} 
+              onClose={() => setActiveStep(null)} 
+              isAdmin={currentUser.role === 'ADMIN'} 
+              currentUser={currentUser} // Passando currentUser para auditoria
+              activeCaseId={activeCase?.id}
               onUpdate={async (c, comp, d) => { 
                 if(activeCase && activeStep) { 
                   // Passar activeCase.id e activeStep.id corretamente

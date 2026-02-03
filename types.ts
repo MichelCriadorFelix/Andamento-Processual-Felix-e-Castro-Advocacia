@@ -84,4 +84,7 @@ export interface CaseDocument {
   url: string;
   created_at: string;
   size?: number;
+  // Auditoria
+  uploadedBy?: string;
+  uploaderRole?: string;
 }

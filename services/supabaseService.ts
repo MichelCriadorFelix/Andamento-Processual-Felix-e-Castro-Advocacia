@@ -404,20 +404,31 @@ export const supabaseService = {
   },
 
   // --- DOCUMENTS ---
-  uploadDocument: async (caseId: string, fileName: string, fileBlob: Blob) => {
+  uploadDocument: async (caseId: string, fileName: string, fileBlob: Blob, uploadedBy?: string, uploaderRole?: string) => {
     if (!supabase) return;
     
     // Sanitização rigorosa
     const safeFileName = fileName.replace(/[^a-zA-Z0-9_-]/g, ''); 
     // Garante que o nome não fique vazio
     const finalName = safeFileName || `doc_${Date.now()}`;
-    const path = `${caseId}/${Date.now()}_${finalName}.pdf`;
+    // Se for PDF, garante extensão
+    const ext = fileBlob.type === 'application/pdf' ? '.pdf' : '.jpg';
+    
+    // Se o arquivo original já tiver extensão no nome, removemos para evitar .pdf.pdf
+    const finalNameClean = finalName.endsWith('.pdf') ? finalName.slice(0, -4) : finalName;
+    
+    const path = `${caseId}/${Date.now()}_${finalNameClean}${ext}`;
+
+    const metadata: any = {};
+    if (uploadedBy) metadata.uploadedBy = uploadedBy;
+    if (uploaderRole) metadata.uploaderRole = uploaderRole;
 
     const { data, error } = await supabase.storage
       .from('documents')
       .upload(path, fileBlob, {
-        contentType: 'application/pdf',
-        upsert: true
+        contentType: fileBlob.type || 'application/pdf',
+        upsert: true,
+        metadata: metadata // Salva os metadados de auditoria
       });
 
     if (error) {
@@ -449,7 +460,9 @@ export const supabaseService = {
          name: f.name,
          url: publicUrl.publicUrl,
          created_at: f.created_at,
-         size: f.metadata?.size
+         size: f.metadata?.size,
+         uploadedBy: f.metadata?.uploadedBy, // Recupera auditoria
+         uploaderRole: f.metadata?.uploaderRole
        };
      });
   }
