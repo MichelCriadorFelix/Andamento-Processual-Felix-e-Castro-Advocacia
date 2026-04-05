@@ -95,14 +95,15 @@ export const firebaseService = {
   },
   loginWithGoogle: async (): Promise<{ user: User | null; error?: string; redirecting?: boolean }> => {
     try {
-      // Check if we are on a mobile device or in PWA mode
+      // Improved detection for mobile and tablets (including iPads)
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const isTablet = (navigator.maxTouchPoints > 0 && window.innerWidth <= 1024);
       const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
       
-      // If mobile or PWA, prefer redirect for better UX and to avoid popup blockers
-      if (isMobile || isPWA) {
+      // If mobile, tablet or PWA, use redirect to avoid popup blockers
+      if (isMobile || isTablet || isPWA) {
         await signInWithRedirect(auth, googleProvider);
-        return { user: null, redirecting: true }; // Redirecting...
+        return { user: null, redirecting: true };
       }
 
       let result;
