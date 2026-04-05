@@ -372,10 +372,17 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
           let profile = await api.getUserProfile(firebaseUser.uid);
           if (profile) {
             // Force admin role for specific emails if they somehow got downgraded or created as client
-            const isRestrictedAdmin = firebaseUser.email === 'felixecastroadv@gmail.com' || firebaseUser.email === 'michelgeminicriador@gmail.com';
+            const isRestrictedAdmin = firebaseUser.email === 'felixecastroadv@gmail.com';
             if (isRestrictedAdmin && profile.role !== 'ADMIN') {
               await api.updateUser(profile.id, { role: 'ADMIN' });
               profile.role = 'ADMIN';
+            }
+
+            // Fix michelgeminicriador@gmail.com if they are admin
+            if (firebaseUser.email === 'michelgeminicriador@gmail.com' && (profile.role === 'ADMIN' || profile.jobTitle)) {
+              await api.updateUser(profile.id, { role: 'CLIENT', jobTitle: '' });
+              profile.role = 'CLIENT';
+              profile.jobTitle = '';
             }
 
             if (profile.role === 'ADMIN') {
