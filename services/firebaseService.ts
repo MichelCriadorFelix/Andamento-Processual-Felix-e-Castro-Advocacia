@@ -1,5 +1,5 @@
 import { db, auth, storage, googleProvider } from '../lib/firebase';
-import { signInWithPopup, signOut } from 'firebase/auth';
+import { signInWithPopup, signOut, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, orderBy, addDoc, serverTimestamp, getDocFromServer, onSnapshot } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, listAll, deleteObject } from 'firebase/storage';
 import { User, LegalCase, CaseType, Step, BenefitType, CaseStatus, CaseTemplate, TemplateStep, CaseDocument, TeamMember } from '../types';
@@ -90,9 +90,33 @@ export const mapCaseFromDB = (dbCase: any, dbSteps: any[], clientName?: string):
 
 export const firebaseService = {
   // --- AUTH ---
-  loginWithGoogle: async (): Promise<{ user: User | null; error?: string }> => {
+  getRedirectResult: async () => {
+    return getRedirectResult(auth);
+  },
+  loginWithGoogle: async (): Promise<{ user: User | null; error?: string; redirecting?: boolean }> => {
     try {
-      const result = await signInWithPopup(auth, googleProvider);
+      // Check if we are on a mobile device or in PWA mode
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+      
+      // If mobile or PWA, prefer redirect for better UX and to avoid popup blockers
+      if (isMobile || isPWA) {
+        await signInWithRedirect(auth, googleProvider);
+        return { user: null, redirecting: true }; // Redirecting...
+      }
+
+      let result;
+      try {
+        result = await signInWithPopup(auth, googleProvider);
+      } catch (popupError: any) {
+        console.warn("Popup blocked or failed, falling back to redirect:", popupError);
+        if (popupError.code === 'auth/popup-blocked' || popupError.code === 'auth/cancelled-popup-request') {
+          await signInWithRedirect(auth, googleProvider);
+          return { user: null, redirecting: true };
+        }
+        throw popupError;
+      }
+
       const user = result.user;
       
       // Check if user exists in profiles

@@ -357,6 +357,15 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
   // --- PERSISTÊNCIA DE SESSÃO ---
   useEffect(() => {
     api.testConnection();
+    
+    // Handle redirect result if any
+    api.getRedirectResult().catch(err => {
+      console.error("Redirect login error:", err);
+      if (err.code !== 'auth/cancelled-popup-request') {
+        setError("Erro ao fazer login com Google. Tente novamente.");
+      }
+    });
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
@@ -409,14 +418,17 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
             setCurrentUser(profile);
             // Redireciona para o dashboard se estiver na landing page
             setView(currentView => currentView === 'LANDING' ? 'DASHBOARD' : currentView);
+            setIsLoggingIn(false);
           }
         } catch (e) {
           console.error("Erro ao carregar perfil na persistência:", e);
+          setIsLoggingIn(false);
         }
       } else {
         // Se não há usuário no Firebase, limpamos o state local
         setCurrentUser(null);
         setView('LANDING');
+        setIsLoggingIn(false);
       }
     });
 
@@ -553,17 +565,25 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
     setRefreshKey(prev => prev + 1);
   };
 
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
   const handleGoogleLogin = async () => {
     setError('');
+    setIsLoggingIn(true);
     try {
       const result = await api.loginWithGoogle();
       if (result.user) {
         loginUser(result.user);
+      } else if (result.redirecting) {
+        // Just wait for redirect
+        console.log("Redirecting to Google login...");
       } else {
         setError(result.error || 'Erro ao entrar com Google.');
+        setIsLoggingIn(false);
       }
     } catch (err) { 
       setError('Erro de conexão ou sistema.'); 
+      setIsLoggingIn(false);
     }
   };
 
@@ -846,15 +866,18 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
   };
 
   const handleClearTeamDuplicates = async () => {
-    if (confirm('Deseja remover membros duplicados da equipe?')) {
+    try {
       await (api as any).clearDuplicateTeamMembers();
-      alert('Duplicados removidos!');
+    } catch (err) {
+      console.error("Erro ao limpar duplicados:", err);
     }
   };
 
   const handleDeleteTeamMember = async (id: string) => {
-    if (confirm('Tem certeza que deseja remover este membro da equipe?')) {
+    try {
       await api.deleteTeamMember(id);
+    } catch (err) {
+      console.error("Erro ao remover membro:", err);
     }
   };
 
@@ -967,6 +990,7 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
           <LandingPage 
             onLoginClick={currentUser ? () => setView('DASHBOARD') : handleGoogleLogin} 
             isLoggedIn={!!currentUser}
+            isLoggingIn={isLoggingIn}
             onAnalysisComplete={handleAnalysisComplete}
           />
         ) : (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Scale, LogIn, Shield, Clock, Gavel, User, Mail, Phone, Award, CheckCircle2, Users } from 'lucide-react';
+import { Scale, LogIn, Shield, Clock, Gavel, User, Mail, Phone, Award, CheckCircle2, Users, RefreshCw } from 'lucide-react';
 import { BenefitsAnalyzer } from './BenefitsAnalyzer';
 import { firebaseService } from '../services/firebaseService';
 import { TeamMember } from '../types';
@@ -7,10 +7,11 @@ import { TeamMember } from '../types';
 interface LandingPageProps {
   onLoginClick: () => void;
   isLoggedIn?: boolean;
+  isLoggingIn?: boolean;
   onAnalysisComplete?: (result: string, data: any) => void;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick, isLoggedIn, onAnalysisComplete }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick, isLoggedIn, isLoggingIn, onAnalysisComplete }) => {
   const [team, setTeam] = useState<TeamMember[]>([]);
 
   useEffect(() => {
@@ -44,10 +45,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick, isLogged
           </div>
           <button 
             onClick={onLoginClick}
-            className="group flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-2.5 rounded-full font-semibold transition-all hover:scale-105 active:scale-95 shadow-xl shadow-slate-900/10"
+            disabled={isLoggingIn}
+            className="group flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-2.5 rounded-full font-semibold transition-all hover:scale-105 active:scale-95 shadow-xl shadow-slate-900/10 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            <LogIn size={18} className="group-hover:translate-x-0.5 transition-transform" />
-            <span>{isLoggedIn ? 'Acessar Painel' : 'Área do Cliente'}</span>
+            {isLoggingIn ? (
+              <RefreshCw size={18} className="animate-spin" />
+            ) : (
+              <LogIn size={18} className="group-hover:translate-x-0.5 transition-transform" />
+            )}
+            <span>{isLoggingIn ? 'Entrando...' : (isLoggedIn ? 'Acessar Painel' : 'Área do Cliente')}</span>
           </button>
         </div>
       </header>
