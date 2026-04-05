@@ -132,10 +132,9 @@ export const firebaseService = {
           await updateDoc(profileRef, { role: 'ADMIN' });
         }
         
-        if (isMichel && (role === 'ADMIN' || jobTitle)) {
-          role = 'CLIENT';
-          jobTitle = '';
-          await updateDoc(profileRef, { role: 'CLIENT', jobTitle: '' });
+        if (isMichel && role !== 'ADMIN') {
+          role = 'ADMIN';
+          await updateDoc(profileRef, { role: 'ADMIN' });
         }
 
         return { user: { id: user.uid, ...profileData, role, jobTitle } as User };
@@ -632,6 +631,7 @@ export const firebaseService = {
 
   // --- STORAGE ---
   uploadFileToStorage: async (caseId: string, fileName: string, fileBlob: Blob, uploadedBy?: string, uploaderRole?: string) => {
+    console.log(`Uploading file to storage: ${caseId}/${fileName}`, { type: fileBlob.type, size: fileBlob.size });
     const safeFileName = fileName.replace(/[^a-zA-Z0-9_-]/g, ''); 
     const finalName = safeFileName || `doc_${Date.now()}`;
     
@@ -650,9 +650,15 @@ export const firebaseService = {
     if (uploadedBy) metadata.customMetadata.uploadedBy = uploadedBy;
     if (uploaderRole) metadata.customMetadata.uploaderRole = uploaderRole;
 
-    await uploadBytes(storageRef, fileBlob, metadata);
-    const url = await getDownloadURL(storageRef);
-    return { path, url };
+    try {
+      await uploadBytes(storageRef, fileBlob, metadata);
+      const url = await getDownloadURL(storageRef);
+      console.log("File uploaded successfully, URL:", url);
+      return { path, url };
+    } catch (error) {
+      console.error("Error in uploadFileToStorage:", error);
+      throw error;
+    }
   },
   
   deleteFileFromStorage: async (caseId: string, fileName: string) => {
@@ -765,17 +771,34 @@ export const firebaseService = {
   },
 
   updateTeamMember: async (id: string, updates: Partial<TeamMember>) => {
-    await updateDoc(doc(db, 'team', id), updates);
+    const path = `team/${id}`;
+    try {
+      const { id: _, ...cleanUpdates } = updates as any;
+      await updateDoc(doc(db, 'team', id), cleanUpdates);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, path);
+    }
   },
 
   deleteTeamMember: async (id: string) => {
-    await deleteDoc(doc(db, 'team', id));
+    const path = `team/${id}`;
+    try {
+      await deleteDoc(doc(db, 'team', id));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, path);
+    }
   },
 
   addTeamMember: async (member: Omit<TeamMember, 'id'>) => {
-    const newRef = doc(collection(db, 'team'));
-    await setDoc(newRef, member);
-    return { id: newRef.id, ...member };
+    const path = 'team';
+    try {
+      const newRef = doc(collection(db, 'team'));
+      await setDoc(newRef, member);
+      return { id: newRef.id, ...member };
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, path);
+      throw error;
+    }
   },
 
   seedTeamMembers: async () => {

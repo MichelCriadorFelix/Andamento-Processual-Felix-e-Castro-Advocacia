@@ -10,6 +10,7 @@ service cloud.firestore {
     function isAdmin() {
       return isAuthenticated() && (
         request.auth.token.email == 'felixecastroadv@gmail.com' ||
+        request.auth.token.email == 'michelgeminicriador@gmail.com' ||
         (exists(/databases/$(database)/documents/profiles/$(request.auth.uid)) && 
          get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role == 'ADMIN')
       );
@@ -33,13 +34,15 @@ service cloud.firestore {
     }
 
     function isValidTeamMember(data) {
-      return hasOnlyAllowedFields(['name', 'role', 'specialty', 'image', 'description', 'order']) &&
+      return (hasOnlyAllowedFields(['name', 'role', 'specialty', 'image', 'description', 'order']) || 
+              hasOnlyAllowedFields(['name', 'role', 'specialty', 'image', 'description', 'order', 'id'])) &&
              data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
              data.role is string && data.role.size() > 0 && data.role.size() < 100 &&
              data.specialty is string && data.specialty.size() < 200 &&
              data.image is string && (data.image.matches("^https://.*") || data.image.matches("^http://.*")) &&
              data.description is string && data.description.size() < 1000 &&
-             data.order is number;
+             data.order is number &&
+             (!('id' in data) || data.id is string);
     }
 
     // Rules

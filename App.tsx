@@ -14,7 +14,7 @@ import { QualificationCard } from './components/QualificationCard';
 import { QualificationModal } from './components/QualificationModal';
 import { ClientProfile } from './components/ClientProfile';
 import Markdown from 'react-markdown';
-import { Scale, LogOut, User as UserIcon, FileText, Briefcase, Users, PlusCircle, Moon, Sun, MessageCircle, Gavel, CheckCheck, ArrowRightLeft, Edit, Trash2, Archive, ChevronLeft, ChevronRight, Search, Lock, Unlock, Settings, List, Plus, X, MoreVertical, Wifi, WifiOff, RefreshCw, Globe, BriefcaseIcon, Shield, AlertTriangle, Bot, Calculator, Phone, Bell, Download, Camera } from 'lucide-react';
+import { Scale, LogOut, User as UserIcon, FileText, Briefcase, Users, PlusCircle, Moon, Sun, MessageCircle, Gavel, CheckCheck, ArrowRightLeft, Edit, Trash2, Archive, ChevronLeft, ChevronRight, Search, Lock, Unlock, Settings, List, Plus, X, MoreVertical, Wifi, WifiOff, RefreshCw, Globe, BriefcaseIcon, Shield, AlertTriangle, AlertCircle, Bot, Calculator, Phone, Bell, Download, Camera } from 'lucide-react';
 import { PREVIDENCIARIO_BENEFITS } from './constants';
 
 const extractQualificationFromAnalysisData = (analysisData: any) => {
@@ -198,6 +198,7 @@ const AppContent: React.FC = () => {
   const [tempTemplateStep, setTempTemplateStep] = useState({ label: '', expectedDuration: 0 });
   const [editingTeamMemberId, setEditingTeamMemberId] = useState<string | null>(null);
   const [tempTeamMember, setTempTeamMember] = useState<Partial<TeamMember>>({});
+  const [uploadingTeamImage, setUploadingTeamImage] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -596,6 +597,9 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
     const unsubTeam = onSnapshot(collection(db, 'team'), (snap) => {
       const teamData = snap.docs.map(d => ({ id: d.id, ...d.data() })) as TeamMember[];
       setTeam(teamData.sort((a, b) => a.order - b.order));
+    }, (err) => {
+      console.error("Erro ao ouvir equipe:", err);
+      setError("Erro ao carregar dados da equipe. Verifique suas permissões.");
     });
 
     return () => {
@@ -965,11 +969,30 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
   };
 
   const handleTeamImageUpload = async (memberId: string, file: File) => {
+    if (file.size > 5 * 1024 * 1024) {
+      setError("A imagem é muito grande. O limite é 5MB.");
+      return;
+    }
+
+    setUploadingTeamImage(memberId);
+    setError('');
     try {
+      console.log("Iniciando upload para membro:", memberId);
       const { url } = await api.uploadFileToStorage('team', file.name, file);
+      console.log("Upload concluído, URL:", url);
+      
       await api.updateTeamMember(memberId, { image: url });
-    } catch (e) {
+      console.log("Firestore atualizado com sucesso");
+      
+      // Se estiver editando este membro, atualiza o estado temporário também
+      if (editingTeamMemberId === memberId) {
+        setTempTeamMember(prev => ({ ...prev, image: url }));
+      }
+    } catch (e: any) {
       console.error('Erro ao fazer upload da imagem da equipe:', e);
+      setError(`Erro ao salvar imagem: ${e.message || 'Erro desconhecido'}`);
+    } finally {
+      setUploadingTeamImage(null);
     }
   };
 
@@ -1094,6 +1117,17 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
             </nav>
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+              {error && (
+                <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-center justify-between animate-fade-in">
+                  <div className="flex items-center gap-3 text-red-700 dark:text-red-400">
+                    <AlertCircle className="w-5 h-5" />
+                    <p className="font-medium">{error}</p>
+                  </div>
+                  <button onClick={() => setError('')} className="text-red-400 hover:text-red-600 transition-colors">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              )}
               {/* ... Dashboard View (Mantida) ... */}
               {view === 'DASHBOARD' && (
                 <div className="space-y-10 animate-fade-in">
@@ -1938,6 +1972,11 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
                       <div key={member.id} className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden group">
                         <div className="relative h-64 overflow-hidden">
                           <img src={member.image} alt={member.name} className="w-full h-full object-cover" />
+                          {uploadingTeamImage === member.id && (
+                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                              <RefreshCw className="w-8 h-8 text-white animate-spin" />
+                            </div>
+                          )}
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
                             <label className="p-3 bg-white text-slate-900 rounded-full cursor-pointer hover:scale-110 transition-transform">
                               <Camera className="w-5 h-5" />
@@ -1996,11 +2035,17 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
                               </div>
                               <div className="space-y-2">
                                 <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">URL da Imagem</label>
-                                <input 
-                                  className="w-full p-2 border rounded dark:bg-slate-700 dark:text-white"
-                                  value={tempTeamMember.image}
-                                  onChange={(e) => setTempTeamMember({ ...tempTeamMember, image: e.target.value })}
-                                />
+                                <div className="flex gap-2">
+                                  <input 
+                                    className="flex-1 p-2 border rounded dark:bg-slate-700 dark:text-white"
+                                    value={tempTeamMember.image}
+                                    onChange={(e) => setTempTeamMember({ ...tempTeamMember, image: e.target.value })}
+                                  />
+                                  <label className="p-2 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center">
+                                    <Camera className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+                                    <input type="file" className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleTeamImageUpload(editingTeamMemberId!, e.target.files[0])} />
+                                  </label>
+                                </div>
                               </div>
                               <div className="flex gap-2 pt-2">
                                 <button onClick={handleSaveTeamMember} className="flex-1 bg-green-600 text-white py-2 rounded font-bold hover:bg-green-700 transition-colors">Salvar</button>
