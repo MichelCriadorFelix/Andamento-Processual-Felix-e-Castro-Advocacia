@@ -358,30 +358,39 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
   useEffect(() => {
     api.testConnection();
     
-    // Check if we are returning from a redirect to show loading state
+    let authSettled = false;
+    let redirectChecked = false;
+
+    // Detect if we are returning from a Firebase Auth redirect
     const isReturningFromRedirect = window.location.search.includes('apiKey') || 
                                    window.location.hash.includes('access_token') ||
-                                   window.location.search.includes('mode=signIn');
+                                   window.location.search.includes('mode=signIn') ||
+                                   window.location.search.includes('__firebase_request_key');
     
     if (isReturningFromRedirect) {
+      console.log("Detected return from redirect, setting isLoggingIn to true");
       setIsLoggingIn(true);
     }
 
-    // Handle redirect result if any
-    api.getRedirectResult().then((result) => {
-      if (result?.user) {
-        console.log("Redirect login successful:", result.user.email);
+    const checkRedirect = async () => {
+      console.log("Checking for redirect result...");
+      try {
+        const result = await api.getRedirectResult();
+        if (result?.user) {
+          console.log("Redirect result found user:", result.user.email);
+        } else {
+          console.log("No redirect result found.");
+        }
+      } catch (err) {
+        console.error("Redirect result error:", err);
+        setError("Erro ao processar o login do Google no celular. Verifique se o domínio está autorizado.");
+      } finally {
+        redirectChecked = true;
+        if (authSettled) setLoading(false);
       }
-      if (isReturningFromRedirect) {
-        setIsLoggingIn(false);
-      }
-    }).catch(err => {
-      console.error("Redirect login error:", err);
-      setIsLoggingIn(false);
-      if (err.code !== 'auth/cancelled-popup-request') {
-        setError("Erro ao fazer login com Google no celular. Verifique se o domínio está autorizado no Firebase.");
-      }
-    });
+    };
+
+    checkRedirect();
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       console.log("Auth state changed:", firebaseUser ? `User: ${firebaseUser.email}` : "No user");
@@ -391,15 +400,19 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
           let profile = await api.getUserProfile(firebaseUser.uid);
           if (profile) {
             console.log("Profile found, role:", profile.role);
-            // Force admin role for specific emails if they somehow got downgraded or created as client
-            const isRestrictedAdmin = firebaseUser.email === 'felixecastroadv@gmail.com';
-            if (isRestrictedAdmin && profile.role !== 'ADMIN') {
+            
+            // Force role correction for specific emails
+            const isFelix = firebaseUser.email === 'felixecastroadv@gmail.com';
+            const isMichel = firebaseUser.email === 'michelgeminicriador@gmail.com';
+            
+            if (isFelix && profile.role !== 'ADMIN') {
+              console.log("Forcing ADMIN role for Felix");
               await api.updateUser(profile.id, { role: 'ADMIN' });
               profile.role = 'ADMIN';
             }
-
-            // Fix michelgeminicriador@gmail.com if they are admin
-            if (firebaseUser.email === 'michelgeminicriador@gmail.com' && (profile.role === 'ADMIN' || profile.jobTitle)) {
+            
+            if (isMichel && (profile.role === 'ADMIN' || profile.jobTitle)) {
+              console.log("Forcing CLIENT role for Michel");
               await api.updateUser(profile.id, { role: 'CLIENT', jobTitle: '' });
               profile.role = 'CLIENT';
               profile.jobTitle = '';
@@ -442,10 +455,11 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
             setIsLoggingIn(false);
           } else {
             console.log("Profile not found, creating new profile for:", firebaseUser.email);
+            const isFelix = firebaseUser.email === 'felixecastroadv@gmail.com';
             const newProfile = await api.createUserProfile(firebaseUser.uid, {
               email: firebaseUser.email || '',
               name: firebaseUser.displayName || 'Usuário',
-              role: 'CLIENT',
+              role: isFelix ? 'ADMIN' : 'CLIENT',
               photoURL: firebaseUser.photoURL || undefined
             });
             setCurrentUser(newProfile);
@@ -463,6 +477,8 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
         setView('LANDING');
         setIsLoggingIn(false);
       }
+      authSettled = true;
+      if (redirectChecked) setLoading(false);
     });
 
     return () => unsubscribe();

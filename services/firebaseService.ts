@@ -106,30 +106,12 @@ export const firebaseService = {
     }
   },
   loginWithGoogle: async (): Promise<{ user: User | null; error?: string; redirecting?: boolean }> => {
+    console.log("Starting loginWithGoogle...");
     try {
-      // Improved detection for mobile and tablets (including iPads)
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      const isTablet = (navigator.maxTouchPoints > 0 && window.innerWidth <= 1024);
-      const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
-      
-      // If mobile, tablet or PWA, use redirect to avoid popup blockers
-      if (isMobile || isTablet || isPWA) {
-        await signInWithRedirect(auth, googleProvider);
-        return { user: null, redirecting: true };
-      }
-
-      let result;
-      try {
-        result = await signInWithPopup(auth, googleProvider);
-      } catch (popupError: any) {
-        console.warn("Popup blocked or failed, falling back to redirect:", popupError);
-        if (popupError.code === 'auth/popup-blocked' || popupError.code === 'auth/cancelled-popup-request') {
-          await signInWithRedirect(auth, googleProvider);
-          return { user: null, redirecting: true };
-        }
-        throw popupError;
-      }
-
+      // Try popup first (opens a new tab/window)
+      console.log("Attempting signInWithPopup...");
+      const result = await signInWithPopup(auth, googleProvider);
+      console.log("signInWithPopup successful:", result.user.email);
       const user = result.user;
       
       // Check if user exists in profiles
@@ -137,7 +119,26 @@ export const firebaseService = {
       const profileSnap = await getDoc(profileRef);
       
       if (profileSnap.exists()) {
-        return { user: { id: user.uid, ...profileSnap.data() } as User };
+        const profileData = profileSnap.data();
+        let role = profileData.role;
+        let jobTitle = profileData.jobTitle;
+        
+        // Force role correction for specific emails
+        const isFelix = user.email === 'felixecastroadv@gmail.com';
+        const isMichel = user.email === 'michelgeminicriador@gmail.com';
+        
+        if (isFelix && role !== 'ADMIN') {
+          role = 'ADMIN';
+          await updateDoc(profileRef, { role: 'ADMIN' });
+        }
+        
+        if (isMichel && (role === 'ADMIN' || jobTitle)) {
+          role = 'CLIENT';
+          jobTitle = '';
+          await updateDoc(profileRef, { role: 'CLIENT', jobTitle: '' });
+        }
+
+        return { user: { id: user.uid, ...profileData, role, jobTitle } as User };
       } else {
         // Check for invitations
         let role: 'ADMIN' | 'CLIENT' = 'CLIENT';
@@ -150,15 +151,12 @@ export const firebaseService = {
             const invData = invSnap.docs[0].data();
             role = invData.role;
             jobTitle = invData.jobTitle || '';
-            // We could delete the invitation here, but it's fine to leave it or delete it later
             await deleteDoc(invSnap.docs[0].ref);
           }
         }
 
-        const isRestrictedAdmin = user.email === 'felixecastroadv@gmail.com';
-        if (isRestrictedAdmin) role = 'ADMIN';
-        
-        console.log(`Novo usuário detectado: ${user.email}, atribuindo papel: ${role}`);
+        const isFelix = user.email === 'felixecastroadv@gmail.com';
+        if (isFelix) role = 'ADMIN';
         
         const newProfile = {
           name: user.displayName || 'Usuário',
@@ -172,8 +170,25 @@ export const firebaseService = {
         await setDoc(profileRef, newProfile);
         return { user: { id: user.uid, ...newProfile } as User };
       }
-    } catch (error: any) {
-      return { user: null, error: error.message };
+    } catch (popupError: any) {
+      console.warn("Popup failed, error code:", popupError.code, popupError.message);
+      
+      // If popup is blocked or fails, fall back to redirect
+      if (popupError.code === 'auth/popup-blocked' || 
+          popupError.code === 'auth/cancelled-popup-request' ||
+          popupError.code === 'auth/popup-closed-by-user' ||
+          popupError.code === 'auth/internal-error') {
+        
+        console.log("Falling back to signInWithRedirect...");
+        try {
+          await signInWithRedirect(auth, googleProvider);
+          return { user: null, redirecting: true };
+        } catch (redirectError: any) {
+          console.error("Redirect failed too:", redirectError);
+          return { user: null, error: "O login foi bloqueado pelo seu navegador. Por favor, permita pop-ups ou tente outro navegador." };
+        }
+      }
+      return { user: null, error: popupError.message };
     }
   },
 
