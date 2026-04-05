@@ -1,0 +1,97 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.email == 'felixecastroadv@gmail.com' ||
+        (exists(/databases/$(database)/documents/profiles/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role == 'ADMIN')
+      );
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidDocument(data) {
+      return hasOnlyAllowedFields(['caseId', 'stepId', 'name', 'url', 'type', 'uploadedAt']) &&
+             data.caseId is string &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 255 &&
+             data.url is string && (data.url.matches("^https://.*") || data.url.matches("^http://.*")) &&
+             data.type is string &&
+             data.uploadedAt is string;
+    }
+
+    function isValidTeamMember(data) {
+      return hasOnlyAllowedFields(['name', 'role', 'specialty', 'image', 'description', 'order']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.role is string && data.role.size() > 0 && data.role.size() < 100 &&
+             data.specialty is string && data.specialty.size() < 200 &&
+             data.image is string && (data.image.matches("^https://.*") || data.image.matches("^http://.*")) &&
+             data.description is string && data.description.size() < 1000 &&
+             data.order is number;
+    }
+
+    // Rules
+    match /profiles/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isOwner(userId) || isAdmin();
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /team/{memberId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidTeamMember(request.resource.data);
+      allow update: if isAdmin() && isValidTeamMember(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /cases/{caseId} {
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.clientId == request.auth.uid);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /steps/{stepId} {
+      allow read: if isAdmin() || isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /documents/{docId} {
+      // Allow read if admin or if the user is authenticated and the query filters by a caseId they own.
+      // Note: In queries, Firestore rules check if the rule is true for all possible results.
+      allow read: if isAdmin() || isAuthenticated(); 
+      allow create: if isAdmin() || (isAuthenticated() && exists(/databases/$(database)/documents/cases/$(request.resource.data.caseId)) && get(/databases/$(database)/documents/cases/$(request.resource.data.caseId)).data.clientId == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+
+    match /templates/{templateId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /template_steps/{templateStepId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /invitations/{invitationId} {
+      allow read, delete: if isAuthenticated() && resource.data.email == request.auth.token.email;
+      allow create, update: if isAdmin();
+    }
+    
+    match /test/connection {
+      allow read: if true;
+    }
+  }
+}

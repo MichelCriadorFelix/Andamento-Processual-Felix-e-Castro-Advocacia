@@ -1,0 +1,129 @@
+{
+  "entities": {
+    "Profile": {
+      "title": "Profile",
+      "description": "User profile for clients and admins",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["ADMIN", "CLIENT"] },
+        "whatsapp": { "type": "string" },
+        "jobTitle": { "type": "string" },
+        "archived": { "type": "boolean" },
+        "uid": { "type": "string" }
+      },
+      "required": ["name", "role", "uid"]
+    },
+    "Case": {
+      "title": "Case",
+      "description": "Legal case for a client",
+      "type": "object",
+      "properties": {
+        "clientId": { "type": "string" },
+        "templateId": { "type": "string" },
+        "caseType": { "type": "string" },
+        "benefitType": { "type": "string" },
+        "title": { "type": "string" },
+        "responsibleLawyer": { "type": "string" },
+        "startDate": { "type": "string" },
+        "status": { "type": "string", "enum": ["ACTIVE", "CONCLUDED", "MOVED_TO_JUDICIAL"] },
+        "caseNumber": { "type": "string" },
+        "expertiseDate": { "type": "string" },
+        "expertises": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" },
+              "date": { "type": "string" },
+              "time": { "type": "string" }
+            }
+          }
+        },
+        "orientations": { "type": "string" },
+        "alerts": { "type": "string" }
+      },
+      "required": ["clientId", "title", "startDate", "status"]
+    },
+    "Step": {
+      "title": "Step",
+      "description": "A step within a legal case",
+      "type": "object",
+      "properties": {
+        "caseId": { "type": "string" },
+        "label": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["LOCKED", "CURRENT", "COMPLETED"] },
+        "completedDate": { "type": "string" },
+        "adminComment": { "type": "string" },
+        "stepOrder": { "type": "number" },
+        "expectedDuration": { "type": "number" }
+      },
+      "required": ["caseId", "label", "status", "stepOrder"]
+    },
+    "Template": {
+      "title": "Template",
+      "description": "A template for a case",
+      "type": "object",
+      "properties": {
+        "label": { "type": "string" },
+        "isSystem": { "type": "boolean" }
+      },
+      "required": ["label"]
+    },
+    "TemplateStep": {
+      "title": "TemplateStep",
+      "description": "A step within a template",
+      "type": "object",
+      "properties": {
+        "templateId": { "type": "string" },
+        "label": { "type": "string" },
+        "expectedDuration": { "type": "number" },
+        "stepOrder": { "type": "number" }
+      },
+      "required": ["templateId", "label", "stepOrder"]
+    },
+    "Document": {
+      "title": "Document",
+      "description": "Metadata for an uploaded document",
+      "type": "object",
+      "properties": {
+        "caseId": { "type": "string" },
+        "stepId": { "type": "string" },
+        "name": { "type": "string" },
+        "url": { "type": "string" },
+        "type": { "type": "string" },
+        "uploadedAt": { "type": "string" }
+      },
+      "required": ["caseId", "name", "url", "type", "uploadedAt"]
+    }
+  },
+  "firestore": {
+    "/profiles/{userId}": {
+      "schema": { "$ref": "#/entities/Profile" },
+      "description": "User profiles"
+    },
+    "/cases/{caseId}": {
+      "schema": { "$ref": "#/entities/Case" },
+      "description": "Legal cases"
+    },
+    "/steps/{stepId}": {
+      "schema": { "$ref": "#/entities/Step" },
+      "description": "Steps for cases"
+    },
+    "/templates/{templateId}": {
+      "schema": { "$ref": "#/entities/Template" },
+      "description": "Case templates"
+    },
+    "/template_steps/{templateStepId}": {
+      "schema": { "$ref": "#/entities/TemplateStep" },
+      "description": "Steps for templates"
+    },
+    "/documents/{docId}": {
+      "schema": { "$ref": "#/entities/Document" },
+      "description": "Metadata for uploaded documents"
+    }
+  }
+}

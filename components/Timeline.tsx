@@ -173,7 +173,13 @@ export const Timeline: React.FC<TimelineProps> = ({ steps, onStepClick, isAdmin,
 
                 {step.completedDate && (
                   <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-medium bg-slate-100 dark:bg-slate-700 inline-block px-2 py-0.5 rounded-full">
-                    {new Date(step.completedDate).toLocaleDateString('pt-BR')}
+                    Concluído: {new Date(step.completedDate).toLocaleDateString('pt-BR')}
+                  </p>
+                )}
+
+                {step.appointmentDate && (
+                  <p className="text-[10px] text-blue-600 dark:text-blue-400 mt-1 font-bold bg-blue-50 dark:bg-blue-900/30 inline-block px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
+                    Agendado: {new Date(step.appointmentDate).toLocaleDateString('pt-BR')}
                   </p>
                 )}
               </div>

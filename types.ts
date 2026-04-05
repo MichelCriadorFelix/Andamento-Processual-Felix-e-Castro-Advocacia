@@ -22,6 +22,21 @@ export type BenefitType =
 
 export type CaseStatus = 'ACTIVE' | 'CONCLUDED' | 'MOVED_TO_JUDICIAL';
 
+export interface UserQualification {
+  gender?: string;
+  age?: number | string;
+  contributionTime?: string;
+  hasMedicalReport?: boolean | string;
+  cid?: string;
+  disabilityType?: string;
+  lastContributionDate?: string;
+  ppp?: string;
+  documents?: string;
+  inssDenied?: string;
+  courtDenied?: string;
+  [key: string]: any; // Allow other fields from analyzer
+}
+
 export interface User {
   id: string;
   name: string;
@@ -29,8 +44,12 @@ export interface User {
   pin?: string; 
   email?: string;
   whatsapp?: string;
+  address?: string;
   jobTitle?: string; // Novo: Cargo (Advogado, Secretária, etc)
   archived?: boolean;
+  analysisResult?: string;
+  analysisData?: any;
+  qualification?: UserQualification; // Novo: Qualificação do cliente
 }
 
 export interface Step {
@@ -39,9 +58,17 @@ export interface Step {
   description?: string;
   status: 'LOCKED' | 'CURRENT' | 'COMPLETED';
   completedDate?: string;
+  appointmentDate?: string; // Novo: Data de agendamento (perícia, audiência, etc)
   adminComment?: string;
   stepOrder: number; 
   expectedDuration?: number;
+}
+
+export interface Expertise {
+  id: string;
+  name: string;
+  date: string;
+  time: string;
 }
 
 export interface LegalCase {
@@ -56,6 +83,11 @@ export interface LegalCase {
   status: CaseStatus;
   steps: Step[];
   clientName?: string; // Opcional para facilitar display
+  caseNumber?: string; // Número do processo
+  expertiseDate?: string; // Legacy: Data da perícia (mantido para compatibilidade)
+  expertises?: Expertise[]; // Novo: Lista de perícias
+  orientations?: string; // Orientações
+  alerts?: string; // Alertas
 }
 
 export interface LoginCredentials {
@@ -80,6 +112,7 @@ export interface CaseTemplate {
 }
 
 export interface CaseDocument {
+  id: string;
   name: string;
   url: string;
   created_at: string;
@@ -87,4 +120,14 @@ export interface CaseDocument {
   // Auditoria
   uploadedBy?: string;
   uploaderRole?: string;
+}
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  role: string;
+  specialty: string;
+  image: string;
+  description: string;
+  order: number;
 }

@@ -1,9 +1,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Step, LegalCase, CaseDocument, User } from '../types';
-import { X, Save, CheckSquare, Trash2, Edit2, Calendar, Camera, FileText, Download, Plus, Loader2, Image as ImageIcon, AlertTriangle, RotateCw, RotateCcw, Scissors, UploadCloud, UserCheck, RefreshCcw } from 'lucide-react';
-import { supabaseService } from '../services/supabaseService';
-import { isSupabaseConfigured } from '../lib/supabase';
+import { X, Save, CheckSquare, Trash2, Edit2, Calendar, Camera, FileText, Download, Plus, Loader2, Image as ImageIcon, AlertTriangle, RotateCw, RotateCcw, Scissors, UploadCloud, UserCheck, RefreshCcw, Clock, AlertCircle } from 'lucide-react';
+import { firebaseService } from '../services/firebaseService';
 // @ts-ignore
 import jsPDF from 'jspdf';
 // @ts-ignore
@@ -43,10 +42,12 @@ interface StepModalProps {
   onClose: () => void;
   isAdmin: boolean;
   currentUser?: User | null; // Adicionado para auditoria
-  onUpdate?: (comment: string, complete: boolean, completionDate?: string) => void;
+  startDate?: string; // Adicionado para cálculo de prazos
+  onUpdate?: (comment: string, complete: boolean, completionDate?: string, appointmentDate?: string) => void;
   onReopen?: () => void; // Novo callback para reabrir
   onDelete?: () => void;
   onRename?: (newLabel: string, newDuration?: number) => void;
+  onMove?: (direction: 'UP' | 'DOWN') => void;
   isAdding?: boolean; 
   stepsList?: Step[]; 
   onAdd?: (label: string, positionIndex: number, duration: number) => void;
@@ -54,11 +55,12 @@ interface StepModalProps {
 }
 
 export const StepModal: React.FC<StepModalProps> = ({ 
-  step, isOpen, onClose, isAdmin, currentUser, onUpdate, onReopen, onDelete, onRename, 
+  step, isOpen, onClose, isAdmin, currentUser, startDate, onUpdate, onReopen, onDelete, onRename, onMove,
   isAdding, stepsList, onAdd, activeCaseId
 }) => {
   const [comment, setComment] = useState('');
   const [completionDate, setCompletionDate] = useState('');
+  const [appointmentDate, setAppointmentDate] = useState('');
   const [isEditingLabel, setIsEditingLabel] = useState(false);
   const [editedLabel, setEditedLabel] = useState('');
   const [editedDuration, setEditedDuration] = useState<number>(0);
@@ -72,6 +74,10 @@ export const StepModal: React.FC<StepModalProps> = ({
   const [docName, setDocName] = useState('');
   const [capturedImages, setCapturedImages] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [directUploadName, setDirectUploadName] = useState("");
+  const [showDirectUploadNameInput, setShowDirectUploadNameInput] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null); // Ref para upload direto
 
@@ -86,6 +92,7 @@ export const StepModal: React.FC<StepModalProps> = ({
       setEditedLabel(step.label);
       setEditedDuration(step.expectedDuration || 0);
       setCompletionDate(new Date().toISOString().split('T')[0]); 
+      setAppointmentDate(step.appointmentDate || '');
       setIsEditingLabel(false);
       
       setIsScanning(false);
@@ -94,7 +101,7 @@ export const StepModal: React.FC<StepModalProps> = ({
       setCropIndex(null); // Reset crop
 
       const isDocStep = step.label.toLowerCase().includes('documenta') || step.label.toLowerCase().includes('doc.');
-      if (activeCaseId && isSupabaseConfigured && isDocStep) {
+      if (activeCaseId && isDocStep) {
          loadDocuments();
       }
     }
@@ -137,7 +144,7 @@ export const StepModal: React.FC<StepModalProps> = ({
   const loadDocuments = async () => {
     if (!activeCaseId) return;
     try {
-      const docs = await supabaseService.getDocuments(activeCaseId);
+      const docs = await firebaseService.getDocuments(activeCaseId);
       setDocuments(docs);
     } catch (e) { console.error("Erro ao carregar docs", e); }
   };
@@ -147,36 +154,45 @@ export const StepModal: React.FC<StepModalProps> = ({
     const files = e.target.files;
     if (!files || files.length === 0 || !activeCaseId) return;
 
-    // Prompt simples para nome
-    const nameInput = prompt("Digite o nome deste documento (ex: Identidade, Procuração):");
-    if (!nameInput) {
-      alert("Upload cancelado: Nome do documento é obrigatório.");
-      if (uploadInputRef.current) uploadInputRef.current.value = '';
+    const file = files[0];
+    // Validação de segurança básica no frontend
+    if (file.type !== 'application/pdf' && !file.type.match('image.*')) {
+      console.error("Apenas arquivos PDF ou Imagens (JPG/PNG) são permitidos por segurança.");
       return;
     }
 
+    setPendingFile(file);
+    setDirectUploadName(file.name);
+    setShowDirectUploadNameInput(true);
+  };
+
+  const confirmDirectUpload = async () => {
+    if (!pendingFile || !activeCaseId || !directUploadName) return;
+
     setIsProcessing(true);
     try {
-      const file = files[0];
-      // Validação de segurança básica no frontend
-      if (file.type !== 'application/pdf' && !file.type.match('image.*')) {
-        alert("Apenas arquivos PDF ou Imagens (JPG/PNG) são permitidos por segurança.");
-        return;
-      }
-
-      await supabaseService.uploadDocument(
+      const { url } = await firebaseService.uploadFileToStorage(
         activeCaseId, 
-        nameInput, 
-        file,
-        currentUser?.name, // Auditoria
-        currentUser?.role // Auditoria
+        directUploadName, 
+        pendingFile,
+        currentUser?.name || undefined,
+        currentUser?.role || undefined
+      );
+
+      await firebaseService.uploadDocumentMetadata(
+        activeCaseId,
+        directUploadName,
+        url,
+        "Documento",
+        step?.id
       );
       
-      alert("Arquivo enviado com sucesso!");
       loadDocuments();
+      setShowDirectUploadNameInput(false);
+      setPendingFile(null);
+      setDirectUploadName("");
     } catch (err: any) {
       console.error(err);
-      alert("Erro ao enviar arquivo: " + (err.message || "Erro desconhecido"));
     } finally {
       setIsProcessing(false);
       if (uploadInputRef.current) uploadInputRef.current.value = '';
@@ -222,7 +238,7 @@ export const StepModal: React.FC<StepModalProps> = ({
     });
 
     if (hasInvalidFile) {
-      alert("Atenção: Alguns arquivos foram ignorados pois não são imagens. Por segurança, apenas fotos são permitidas.");
+      console.warn("Atenção: Alguns arquivos foram ignorados pois não são imagens. Por segurança, apenas fotos são permitidas.");
     }
   };
 
@@ -266,14 +282,11 @@ export const StepModal: React.FC<StepModalProps> = ({
   };
 
   const removeImage = (index: number) => {
-    if(confirm("Remover esta foto?")) {
-      setCapturedImages(prev => prev.filter((_, i) => i !== index));
-    }
+    setCapturedImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSaveScannedDocument = async () => {
     if (!docName || capturedImages.length === 0 || !activeCaseId) {
-      alert("Preencha o nome do documento e tire pelo menos uma foto.");
       return;
     }
 
@@ -293,29 +306,28 @@ export const StepModal: React.FC<StepModalProps> = ({
 
       const pdfBlob = pdf.output('blob');
       
-      await supabaseService.uploadDocument(
+      const { url } = await firebaseService.uploadFileToStorage(
         activeCaseId, 
         docName, 
         pdfBlob,
-        currentUser?.name, // Auditoria
-        currentUser?.role // Auditoria
+        currentUser?.name || undefined,
+        currentUser?.role || undefined
+      );
+
+      await firebaseService.uploadDocumentMetadata(
+        activeCaseId,
+        docName,
+        url,
+        "Documento",
+        step?.id
       );
       
-      alert("Documento salvo com sucesso!");
       setIsScanning(false);
       setCapturedImages([]);
       setDocName('');
       loadDocuments(); 
     } catch (e: any) {
       console.error("Erro completo:", e);
-      let errorMsg = "Erro desconhecido.";
-      if (typeof e === 'string') errorMsg = e;
-      else if (e?.message) errorMsg = e.message;
-      
-      if (errorMsg.toLowerCase().includes("security") || errorMsg.toLowerCase().includes("policy")) {
-         errorMsg = "ERRO DE PERMISSÃO NO SUPABASE (RLS). Execute o script SQL de correção.";
-      }
-      alert(`FALHA NO UPLOAD:\n\n${errorMsg}`);
     } finally {
       setIsProcessing(false);
     }
@@ -323,14 +335,14 @@ export const StepModal: React.FC<StepModalProps> = ({
   
   const handleDeleteDocument = async (doc: CaseDocument) => {
     if (!activeCaseId) return;
-    if (confirm(`Tem certeza que deseja excluir o documento "${doc.name}"?`)) {
-       try {
-         await supabaseService.deleteDocument(activeCaseId, doc.name);
-         loadDocuments();
-       } catch(e) {
-         console.error(e);
-         alert("Erro ao excluir documento.");
-       }
+    
+    try {
+      await firebaseService.deleteDocumentMetadata(doc.id);
+      // Opcional: deletar do storage também se tivermos o path
+      loadDocuments();
+      setConfirmDeleteId(null);
+    } catch(e) {
+      console.error(e);
     }
   };
 
@@ -339,7 +351,7 @@ export const StepModal: React.FC<StepModalProps> = ({
       onRename(editedLabel, editedDuration);
     }
     if (onUpdate) {
-      onUpdate(comment, false);
+      onUpdate(comment, false, undefined, appointmentDate);
     }
     onClose();
   };
@@ -347,7 +359,6 @@ export const StepModal: React.FC<StepModalProps> = ({
   if (!isOpen) return null;
 
   if (isAdding && onAdd && stepsList) {
-    // ... (Mantive o código do modal de adicionar etapa igual, sem alterações)
     return (
       <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
         <div className="bg-white dark:bg-slate-800 rounded-lg shadow-2xl w-full max-w-md animate-fade-in border border-red-900/20">
@@ -411,26 +422,88 @@ export const StepModal: React.FC<StepModalProps> = ({
   const isDocumentStep = step.label.toLowerCase().includes('documenta') || step.label.toLowerCase().includes('doc.');
   const canManageDocs = isAdmin || step.status !== 'COMPLETED';
 
+  // --- Lógica do Contador de Dias ---
+  const getDaysDiff = (start: string, end: string = new Date().toISOString()) => {
+    const s = new Date(start);
+    const e = new Date(end);
+    const diff = e.getTime() - s.getTime();
+    return Math.floor(diff / (1000 * 60 * 60 * 24));
+  };
+
+  let daysCount = 0;
+  let isDelayed = false;
+  if (step.status === 'CURRENT' && stepsList && startDate) {
+    const idx = stepsList.findIndex(s => s.id === step.id);
+    const prev = idx > 0 ? stepsList[idx - 1] : null;
+    const countStart = prev ? prev.completedDate : startDate;
+    if (countStart) {
+      daysCount = getDaysDiff(countStart);
+      if (step.expectedDuration && daysCount > step.expectedDuration) {
+        isDelayed = true;
+      }
+    }
+  }
+
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto">
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in border border-red-900/20 dark:border-red-900/50 my-8">
         
         {/* HEADER */}
         <div className="bg-red-950 dark:bg-slate-950 px-6 py-4 flex justify-between items-center border-b border-red-900 dark:border-slate-800">
-           {/* ... Header content mantido ... */}
-           <h3 className="text-white font-serif font-medium text-lg truncate pr-4">
-             {step.label} 
-             <span className="text-xs text-red-300 ml-2 font-sans border border-red-800 px-1 rounded">
-               {step.expectedDuration ? `${step.expectedDuration} dias` : 'S/P'}
-             </span>
-           </h3>
+           <div className="flex items-center gap-3 truncate pr-4">
+              {isEditingLabel ? (
+                <div className="flex items-center gap-2">
+                  <input 
+                    className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm p-1 rounded border border-red-300"
+                    value={editedLabel}
+                    onChange={e => setEditedLabel(e.target.value)}
+                    autoFocus
+                  />
+                  <input 
+                    type="number"
+                    className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm p-1 rounded border border-red-300 w-16"
+                    value={editedDuration}
+                    onChange={e => setEditedDuration(Number(e.target.value))}
+                  />
+                  <button 
+                    onClick={() => {
+                      if (onRename) onRename(editedLabel, editedDuration);
+                      setIsEditingLabel(false);
+                    }} 
+                    className="text-green-400 hover:text-green-300"
+                  >
+                    <CheckSquare className="w-5 h-5"/>
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <h3 className="text-white font-serif font-medium text-lg truncate">
+                    {step.label} 
+                    <span className="text-xs text-red-300 ml-2 font-sans border border-red-800 px-1 rounded">
+                      {step.expectedDuration ? `${step.expectedDuration} dias` : 'S/P'}
+                    </span>
+                  </h3>
+                  {isAdmin && (
+                    <div className="flex gap-1">
+                      <button onClick={() => setIsEditingLabel(true)} className="p-1 text-red-300 hover:text-white bg-red-900/50 rounded" title="Editar Nome/Prazo"><Edit2 className="w-3 h-3"/></button>
+                      {onMove && (
+                        <>
+                          <button onClick={() => onMove('UP')} className="p-1 text-red-300 hover:text-white bg-red-900/50 rounded" title="Mover para Cima"><RotateCcw className="w-3 h-3 rotate-90"/></button>
+                          <button onClick={() => onMove('DOWN')} className="p-1 text-red-300 hover:text-white bg-red-900/50 rounded" title="Mover para Baixo"><RotateCw className="w-3 h-3 rotate-90"/></button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+           </div>
            <button onClick={onClose} className="text-red-200 hover:text-white transition-colors">
               <X className="w-5 h-5" />
             </button>
         </div>
         
         <div className="p-6 relative">
-          {/* EDITOR DE CROP (OVERLAY) - Mantido */}
+          {/* EDITOR DE CROP (OVERLAY) */}
           {cropIndex !== null && (
             <div className="absolute inset-0 z-50 bg-slate-900 flex flex-col">
               <div className="flex-1 overflow-hidden bg-black flex items-center justify-center p-4">
@@ -462,23 +535,29 @@ export const StepModal: React.FC<StepModalProps> = ({
             }`}>
               {step.status === 'COMPLETED' ? 'CONCLUÍDO' : step.status === 'CURRENT' ? 'EM ANDAMENTO' : 'BLOQUEADO'}
             </span>
+            
+            {step.status === 'CURRENT' && (
+              <div className={`text-xs font-bold flex items-center gap-1 ${isDelayed ? 'text-red-600 animate-pulse' : 'text-green-600'}`}>
+                <Clock className="w-4 h-4"/>
+                {daysCount} dias corridos
+                {isDelayed && <AlertTriangle className="w-4 h-4 ml-1"/>}
+              </div>
+            )}
           </div>
+
+          {isDelayed && step.status === 'CURRENT' && (
+            <div className="mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 rounded flex items-center gap-3 animate-bounce">
+              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-500" />
+              <p className="text-xs font-bold text-red-800 dark:text-red-300">
+                ATENÇÃO: Prazo de {step.expectedDuration} dias ultrapassado!
+              </p>
+            </div>
+          )}
 
           {isDocumentStep && (
             <div className="mb-6 border-b border-slate-200 dark:border-slate-700 pb-6">
-              {!isSupabaseConfigured ? (
-                 <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-3 rounded flex items-start gap-2">
-                   <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-500 flex-shrink-0" />
-                   <div>
-                     <h4 className="text-sm font-bold text-amber-800 dark:text-amber-400">Scanner Indisponível</h4>
-                     <p className="text-xs text-amber-700 dark:text-amber-500 mt-1">
-                       O sistema não detectou a conexão com o banco de dados (Supabase).
-                     </p>
-                   </div>
-                 </div>
-              ) : (
-                <>
-                  {!isScanning ? (
+              <>
+                {!isScanning ? (
                     <div className="space-y-3">
                        <div className="flex justify-between items-center mb-2">
                          <h4 className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2"><FileText className="w-4 h-4"/> Documentos Digitais</h4>
@@ -512,6 +591,40 @@ export const StepModal: React.FC<StepModalProps> = ({
                          )}
                        </div>
 
+                       {showDirectUploadNameInput && (
+                          <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded animate-in fade-in slide-in-from-top-2">
+                            <label className="block text-xs font-bold text-blue-800 dark:text-blue-400 uppercase mb-2">Nome do Documento para Upload</label>
+                            <div className="flex gap-2">
+                              <input 
+                                type="text"
+                                className="flex-1 border p-2 text-sm rounded bg-white dark:bg-slate-800 dark:text-white dark:border-slate-600"
+                                placeholder="Ex: Identidade, Procuração..."
+                                value={directUploadName}
+                                onChange={e => setDirectUploadName(e.target.value)}
+                                autoFocus
+                              />
+                              <button 
+                                onClick={confirmDirectUpload}
+                                disabled={!directUploadName || isProcessing}
+                                className="bg-blue-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                              >
+                                {isProcessing ? <Loader2 className="w-4 h-4 animate-spin"/> : <UploadCloud className="w-4 h-4"/>}
+                                Salvar
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  setShowDirectUploadNameInput(false);
+                                  setPendingFile(null);
+                                  if (uploadInputRef.current) uploadInputRef.current.value = '';
+                                }}
+                                className="px-3 py-2 text-sm text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 rounded"
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
                        {documents.length === 0 ? (
                          <div className="text-center p-4 bg-slate-50 dark:bg-slate-800 rounded border border-dashed border-slate-300 dark:border-slate-600 text-xs text-slate-500">
                            Nenhum documento digitalizado ainda.
@@ -534,14 +647,36 @@ export const StepModal: React.FC<StepModalProps> = ({
                                      <Download className="w-4 h-4"/>
                                    </a>
                                    {canManageDocs && (
-                                     <button 
-                                       onClick={() => handleDeleteDocument(doc)}
-                                       className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
-                                       title="Excluir Documento"
-                                     >
-                                       <Trash2 className="w-4 h-4" />
-                                     </button>
-                                   )}
+                                      <>
+                                        {confirmDeleteId === doc.id ? (
+                                          <div className="flex items-center gap-1 bg-red-50 dark:bg-red-900/20 p-1 rounded border border-red-200 dark:border-red-800">
+                                            <span className="text-[10px] font-bold text-red-700 dark:text-red-400 px-1 uppercase">Excluir?</span>
+                                            <button 
+                                              onClick={() => handleDeleteDocument(doc)}
+                                              className="p-1 text-white bg-red-600 rounded hover:bg-red-700"
+                                              title="Confirmar Exclusão"
+                                            >
+                                              <CheckSquare className="w-3 h-3" />
+                                            </button>
+                                            <button 
+                                              onClick={() => setConfirmDeleteId(null)}
+                                              className="p-1 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 rounded"
+                                              title="Cancelar"
+                                            >
+                                              <X className="w-3 h-3" />
+                                            </button>
+                                          </div>
+                                        ) : (
+                                          <button 
+                                            onClick={() => setConfirmDeleteId(doc.id)}
+                                            className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
+                                            title="Excluir Documento"
+                                          >
+                                            <Trash2 className="w-4 h-4" />
+                                          </button>
+                                        )}
+                                      </>
+                                    )}
                                  </div>
                                </div>
                                
@@ -559,7 +694,6 @@ export const StepModal: React.FC<StepModalProps> = ({
                        )}
                     </div>
                   ) : (
-                    // ... (TELA DE DIGITALIZAÇÃO MANTIDA - Sem alterações profundas, apenas lógica de retorno)
                     <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded border border-red-200 dark:border-red-900/30">
                       <h4 className="font-bold text-red-900 dark:text-red-300 mb-3 text-sm">Nova Digitalização</h4>
                       
@@ -577,7 +711,6 @@ export const StepModal: React.FC<StepModalProps> = ({
                             ))}
                           </select>
                         </div>
-                        {/* ... Input de Foto e Lista de Fotos (Mantidos) ... */}
                         <div className="grid grid-cols-2 gap-2">
                           <button 
                             onClick={() => fileInputRef.current?.click()}
@@ -628,11 +761,9 @@ export const StepModal: React.FC<StepModalProps> = ({
                     </div>
                   )}
                 </>
-              )}
             </div>
           )}
 
-          {/* ... Restante do Modal (Comentários, Datas) Mantido ... */}
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-bold text-red-950 dark:text-red-200 mb-2">
@@ -654,32 +785,61 @@ export const StepModal: React.FC<StepModalProps> = ({
             </div>
 
             {isAdmin && step.status !== 'COMPLETED' && (
-              <div className="bg-amber-50 dark:bg-amber-900/20 p-4 border border-amber-200 dark:border-amber-800 rounded">
-                <label className="block text-xs font-bold text-amber-800 dark:text-amber-400 mb-2 uppercase flex items-center">
-                  <Calendar className="w-4 h-4 mr-1"/> Data da Conclusão
-                </label>
-                <input 
-                  type="date"
-                  className="w-full border p-2 text-sm rounded bg-white dark:bg-slate-800 dark:text-white dark:border-slate-600"
-                  value={completionDate}
-                  onChange={e => setCompletionDate(e.target.value)}
-                />
-                <p className="text-[10px] text-amber-700 dark:text-amber-500 mt-1">
-                  Se este passo já foi feito antes, altere a data para corrigir a contagem de prazo do próximo passo.
-                </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-amber-50 dark:bg-amber-900/20 p-4 border border-amber-200 dark:border-amber-800 rounded">
+                  <label className="block text-xs font-bold text-amber-800 dark:text-amber-400 mb-2 uppercase flex items-center">
+                    <Calendar className="w-4 h-4 mr-1"/> Data da Conclusão
+                  </label>
+                  <input 
+                    type="date"
+                    className="w-full border p-2 text-sm rounded bg-white dark:bg-slate-800 dark:text-white dark:border-slate-600"
+                    value={completionDate}
+                    onChange={e => setCompletionDate(e.target.value)}
+                  />
+                  <p className="text-[10px] text-amber-700 dark:text-amber-500 mt-1">
+                    Se este passo já foi feito antes, altere a data para corrigir a contagem de prazo do próximo passo.
+                  </p>
+                </div>
+
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 border border-blue-200 dark:border-blue-800 rounded">
+                  <label className="block text-xs font-bold text-blue-800 dark:text-blue-400 mb-2 uppercase flex items-center">
+                    <Calendar className="w-4 h-4 mr-1"/> Data do Agendamento
+                  </label>
+                  <input 
+                    type="date"
+                    className="w-full border p-2 text-sm rounded bg-white dark:bg-slate-800 dark:text-white dark:border-slate-600"
+                    value={appointmentDate}
+                    onChange={e => setAppointmentDate(e.target.value)}
+                  />
+                  <p className="text-[10px] text-blue-700 dark:text-blue-500 mt-1">
+                    Use para marcar perícias, audiências ou prazos específicos.
+                  </p>
+                </div>
               </div>
             )}
             
-            {/* Aviso quando completado */}
             {step.status === 'COMPLETED' && (
-               <div className="bg-green-50 dark:bg-green-900/20 p-3 border border-green-200 dark:border-green-800 rounded flex items-center">
-                 <CheckSquare className="w-5 h-5 text-green-600 dark:text-green-500 mr-2" />
-                 <div>
-                    <p className="text-sm font-bold text-green-800 dark:text-green-300">Etapa Concluída</p>
-                    <p className="text-xs text-green-700 dark:text-green-400">
-                      Em: {new Date(step.completedDate || '').toLocaleDateString()}
-                    </p>
+               <div className="space-y-2">
+                 <div className="bg-green-50 dark:bg-green-900/20 p-3 border border-green-200 dark:border-green-800 rounded flex items-center">
+                   <CheckSquare className="w-5 h-5 text-green-600 dark:text-green-500 mr-2" />
+                   <div>
+                      <p className="text-sm font-bold text-green-800 dark:text-green-300">Etapa Concluída</p>
+                      <p className="text-xs text-green-700 dark:text-green-400">
+                        Em: {new Date(step.completedDate || '').toLocaleDateString()}
+                      </p>
+                   </div>
                  </div>
+                 {step.appointmentDate && (
+                   <div className="bg-blue-50 dark:bg-blue-900/20 p-3 border border-blue-200 dark:border-blue-800 rounded flex items-center">
+                     <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-500 mr-2" />
+                     <div>
+                        <p className="text-sm font-bold text-blue-800 dark:text-blue-300">Agendamento Realizado</p>
+                        <p className="text-xs text-blue-700 dark:text-blue-400">
+                          Data: {new Date(step.appointmentDate).toLocaleDateString()}
+                        </p>
+                     </div>
+                   </div>
+                 )}
                </div>
             )}
           </div>
@@ -693,7 +853,7 @@ export const StepModal: React.FC<StepModalProps> = ({
               {step.status === 'COMPLETED' ? (
                 <button 
                   onClick={() => {
-                    if (onReopen && confirm("Deseja reabrir esta etapa? Ela voltará para 'Em Andamento'.")) {
+                    if (onReopen) {
                       onReopen();
                       onClose();
                     }
@@ -705,7 +865,7 @@ export const StepModal: React.FC<StepModalProps> = ({
               ) : (
                 <button 
                   onClick={() => {
-                    if (onUpdate) onUpdate(comment, true, completionDate);
+                    if (onUpdate) onUpdate(comment, true, completionDate, appointmentDate);
                     onClose();
                   }}
                   className="flex items-center px-4 py-2 bg-red-950 dark:bg-red-800 text-white rounded-none text-sm font-bold hover:bg-red-900 dark:hover:bg-red-700 shadow-lg uppercase tracking-wider"
@@ -718,8 +878,18 @@ export const StepModal: React.FC<StepModalProps> = ({
                 onClick={handleGeneralSave}
                 className="flex items-center px-4 py-2 bg-white dark:bg-slate-800 border border-red-900 dark:border-slate-500 text-red-900 dark:text-slate-300 rounded-none text-sm font-bold uppercase tracking-wider"
               >
-                <Save className="w-4 h-4 mr-2" /> Salvar Comentário
+                <Save className="w-4 h-4 mr-2" /> Salvar
               </button>
+
+              {onDelete && (
+                <button 
+                  onClick={() => { if(confirm('Tem certeza que deseja excluir esta etapa do processo?')) { onDelete(); onClose(); } }}
+                  className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                  title="Excluir Etapa"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              )}
             </>
           )}
         </div>
