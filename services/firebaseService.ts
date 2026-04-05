@@ -221,6 +221,19 @@ export const firebaseService = {
     }
   },
 
+  createUserProfile: async (uid: string, data: { email: string; name: string; role: 'ADMIN' | 'CLIENT'; photoURL?: string }) => {
+    const path = `profiles/${uid}`;
+    try {
+      const profileRef = doc(db, 'profiles', uid);
+      const payload = { ...data, uid, archived: false };
+      await setDoc(profileRef, payload);
+      return { id: uid, ...payload } as User;
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, path);
+      throw error;
+    }
+  },
+
   createUser: async (name: string, email: string, role: 'CLIENT' | 'ADMIN', whatsapp?: string, jobTitle?: string) => {
     const path = 'profiles';
     try {

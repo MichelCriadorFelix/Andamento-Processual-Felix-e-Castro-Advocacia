@@ -615,6 +615,7 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
   };
 
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const handleGoogleLogin = async () => {
     setError('');
@@ -1031,7 +1032,15 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
 
   return (
     <div className={darkMode ? 'dark' : ''}>
-      <div className="min-h-screen transition-colors duration-300 bg-slate-100 dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100">
+      {loading ? (
+        <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-900">
+          <div className="flex flex-col items-center gap-4">
+            <RefreshCw className="w-12 h-12 text-bordo-900 animate-spin" />
+            <p className="text-slate-600 dark:text-slate-400 font-medium">Carregando...</p>
+          </div>
+        </div>
+      ) : (
+        <div className="min-h-screen transition-colors duration-300 bg-slate-100 dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100">
         
         <button onClick={toggleTheme} className="fixed top-4 right-4 z-50 p-2 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-yellow-400 hover:scale-110 transition-transform shadow-lg">{darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}</button>
 
@@ -2084,6 +2093,7 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
           </div>
         )}
       </div>
+      )}
     </div>
   );
 };

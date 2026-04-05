@@ -6,12 +6,19 @@ import firebaseConfigJson from '../firebase-applet-config.json';
 
 // Use environment variables if available (for Vercel/Production), otherwise fallback to the config file
 const firebaseConfig = {
+  // @ts-ignore
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || firebaseConfigJson.apiKey,
+  // @ts-ignore
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseConfigJson.authDomain,
+  // @ts-ignore
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseConfigJson.projectId,
+  // @ts-ignore
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseConfigJson.storageBucket,
+  // @ts-ignore
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseConfigJson.messagingSenderId,
+  // @ts-ignore
   appId: import.meta.env.VITE_FIREBASE_APP_ID || firebaseConfigJson.appId,
+  // @ts-ignore
   firestoreDatabaseId: import.meta.env.VITE_FIREBASE_DATABASE_ID || firebaseConfigJson.firestoreDatabaseId
 };
 
