@@ -358,19 +358,39 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
   useEffect(() => {
     api.testConnection();
     
+    // Check if we are returning from a redirect to show loading state
+    const isReturningFromRedirect = window.location.search.includes('apiKey') || 
+                                   window.location.hash.includes('access_token') ||
+                                   window.location.search.includes('mode=signIn');
+    
+    if (isReturningFromRedirect) {
+      setIsLoggingIn(true);
+    }
+
     // Handle redirect result if any
-    api.getRedirectResult().catch(err => {
+    api.getRedirectResult().then((result) => {
+      if (result?.user) {
+        console.log("Redirect login successful:", result.user.email);
+      }
+      if (isReturningFromRedirect) {
+        setIsLoggingIn(false);
+      }
+    }).catch(err => {
       console.error("Redirect login error:", err);
+      setIsLoggingIn(false);
       if (err.code !== 'auth/cancelled-popup-request') {
-        setError("Erro ao fazer login com Google. Tente novamente.");
+        setError("Erro ao fazer login com Google no celular. Verifique se o domínio está autorizado no Firebase.");
       }
     });
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log("Auth state changed:", firebaseUser ? `User: ${firebaseUser.email}` : "No user");
       if (firebaseUser) {
         try {
+          console.log("Fetching profile for UID:", firebaseUser.uid);
           let profile = await api.getUserProfile(firebaseUser.uid);
           if (profile) {
+            console.log("Profile found, role:", profile.role);
             // Force admin role for specific emails if they somehow got downgraded or created as client
             const isRestrictedAdmin = firebaseUser.email === 'felixecastroadv@gmail.com';
             if (isRestrictedAdmin && profile.role !== 'ADMIN') {
@@ -416,7 +436,19 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
             }
 
             setCurrentUser(profile);
+            console.log("Setting view to DASHBOARD");
             // Redireciona para o dashboard se estiver na landing page
+            setView(currentView => currentView === 'LANDING' ? 'DASHBOARD' : currentView);
+            setIsLoggingIn(false);
+          } else {
+            console.log("Profile not found, creating new profile for:", firebaseUser.email);
+            const newProfile = await api.createUserProfile(firebaseUser.uid, {
+              email: firebaseUser.email || '',
+              name: firebaseUser.displayName || 'Usuário',
+              role: 'CLIENT',
+              photoURL: firebaseUser.photoURL || undefined
+            });
+            setCurrentUser(newProfile);
             setView(currentView => currentView === 'LANDING' ? 'DASHBOARD' : currentView);
             setIsLoggingIn(false);
           }
@@ -425,6 +457,7 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
           setIsLoggingIn(false);
         }
       } else {
+        console.log("No firebase user in onAuthStateChanged");
         // Se não há usuário no Firebase, limpamos o state local
         setCurrentUser(null);
         setView('LANDING');

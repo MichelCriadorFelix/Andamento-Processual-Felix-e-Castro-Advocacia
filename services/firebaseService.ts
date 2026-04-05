@@ -91,7 +91,19 @@ export const mapCaseFromDB = (dbCase: any, dbSteps: any[], clientName?: string):
 export const firebaseService = {
   // --- AUTH ---
   getRedirectResult: async () => {
-    return getRedirectResult(auth);
+    console.log("Checking for redirect result...");
+    try {
+      const result = await getRedirectResult(auth);
+      if (result) {
+        console.log("Redirect result found for:", result.user.email);
+      } else {
+        console.log("No redirect result found.");
+      }
+      return result;
+    } catch (error) {
+      console.error("Error getting redirect result:", error);
+      throw error;
+    }
   },
   loginWithGoogle: async (): Promise<{ user: User | null; error?: string; redirecting?: boolean }> => {
     try {
