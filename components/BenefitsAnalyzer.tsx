@@ -85,7 +85,7 @@ Formate a resposta em Markdown, sendo muito direto e empático.
       const responseText = await handleGeminiError(async () => {
         const ai = getGeminiClient();
         const response = await ai.models.generateContent({
-          model: 'gemini-3.1-pro-preview',
+          model: 'gemini-3-flash-preview',
           contents: prompt
         });
         return response.text;

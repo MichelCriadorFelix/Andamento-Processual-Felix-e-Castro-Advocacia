@@ -49,26 +49,40 @@ export const handleGeminiError = async <T>(
   maxRetries: number = getAvailableKeys().length
 ): Promise<T> => {
   let retries = 0;
+  const keys = getAvailableKeys();
+  console.log(`[Gemini] Available keys: ${keys.length}, maxRetries: ${maxRetries}`);
   
+  if (keys.length === 0) {
+    throw new Error('Nenhuma chave da API do Gemini configurada.');
+  }
+
   while (retries < maxRetries) {
     try {
       return await operation();
     } catch (error: any) {
+      console.error(`[Gemini] Error on attempt ${retries + 1}:`, error);
+      
       const isRateLimit = error?.status === 429 || 
                           error?.message?.includes('429') || 
                           error?.message?.includes('quota') || 
                           error?.message?.includes('exhausted') ||
                           error?.message?.includes('Too Many Requests');
                           
-      if (isRateLimit && getAvailableKeys().length > 1) {
-        console.warn(`Gemini API rate limit hit (Key #${currentKeyIndex + 1}). Rotating key and retrying...`);
-        rotateGeminiKey();
-        retries++;
+      if (isRateLimit) {
+        if (keys.length > 1) {
+          console.warn(`Gemini API rate limit hit (Key #${currentKeyIndex + 1}). Rotating key and retrying...`);
+          rotateGeminiKey();
+          retries++;
+        } else {
+          console.error(`[Gemini] Rate limit hit, but only 1 key available.`);
+          throw new Error('A chave da API do Gemini atingiu o limite de uso (cota excedida). Tente novamente mais tarde.');
+        }
       } else {
-        throw error; // Not a rate limit error, or no other keys to try
+        console.error(`[Gemini] Non-rate-limit error. Throwing original error.`);
+        throw error; // Not a rate limit error
       }
     }
   }
   
-  throw new Error('All Gemini API keys exhausted their quota or rate limits.');
+  throw new Error('Todas as chaves da API do Gemini atingiram o limite de uso (cota excedida). Tente novamente mais tarde.');
 };
