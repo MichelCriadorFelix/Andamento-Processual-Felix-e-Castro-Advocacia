@@ -771,11 +771,14 @@ export const firebaseService = {
   },
 
   updateTeamMember: async (id: string, updates: Partial<TeamMember>) => {
+    console.log(`Updating team member ${id} with:`, updates);
     const path = `team/${id}`;
     try {
       const { id: _, ...cleanUpdates } = updates as any;
       await updateDoc(doc(db, 'team', id), cleanUpdates);
+      console.log(`Team member ${id} updated successfully`);
     } catch (error) {
+      console.error(`Error updating team member ${id}:`, error);
       handleFirestoreError(error, OperationType.UPDATE, path);
     }
   },
