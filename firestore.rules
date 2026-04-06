@@ -39,7 +39,7 @@ service cloud.firestore {
              data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
              data.role is string && data.role.size() > 0 && data.role.size() < 100 &&
              data.specialty is string && data.specialty.size() < 200 &&
-             data.image is string && (data.image.matches("^https://.*") || data.image.matches("^http://.*")) &&
+             data.image is string && (data.image.matches("^https://.*") || data.image.matches("^http://.*") || data.image.matches("^data:image/.*")) &&
              data.description is string && data.description.size() < 1000 &&
              data.order is number &&
              (!('id' in data) || data.id is string);
