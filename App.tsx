@@ -205,6 +205,11 @@ const AppContent: React.FC = () => {
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+    if (!isStandalone) {
+      setIsInstallable(true);
+    }
+
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -212,14 +217,6 @@ const AppContent: React.FC = () => {
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    // Check if it's iOS and not already installed
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
-    
-    if (isIOS && !isStandalone) {
-      setIsInstallable(true);
-    }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -1171,6 +1168,15 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
                      </div>
                   </div>
                   <div className="flex items-center space-x-3 md:space-x-4">
+                    {isInstallable && (
+                      <button 
+                        onClick={handleInstallClick}
+                        className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 shadow-sm"
+                      >
+                        <Download size={16} />
+                        <span className="hidden sm:inline">Instalar App</span>
+                      </button>
+                    )}
                     <NotificationBell />
                     {currentUser.role === 'ADMIN' && (
                        <>

@@ -49,10 +49,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick, isLogged
             {isInstallable && (
               <button 
                 onClick={onInstallClick}
-                className="hidden sm:flex items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white px-4 py-2.5 rounded-full font-semibold transition-all hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 shadow-sm"
+                className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white px-3 sm:px-4 py-2.5 rounded-full font-semibold transition-all hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 shadow-sm"
               >
                 <Download size={18} />
-                <span>Instalar App</span>
+                <span className="hidden sm:inline">Instalar App</span>
+                <span className="sm:hidden">Instalar</span>
               </button>
             )}
             <button 
