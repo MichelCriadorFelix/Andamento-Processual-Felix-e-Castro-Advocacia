@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Calculator, ArrowRight, CheckCircle2, Loader2, AlertCircle, User } from 'lucide-react';
 import { PREVIDENCIARIO_BENEFITS } from '../constants';
-import { GoogleGenAI } from '@google/genai';
+import { getGeminiClient, handleGeminiError } from '../lib/gemini';
 import Markdown from 'react-markdown';
 
 interface BenefitsAnalyzerProps {
@@ -38,14 +38,6 @@ export const BenefitsAnalyzer: React.FC<BenefitsAnalyzerProps> = ({ onLoginClick
     setResult(null);
 
     try {
-      // @ts-ignore
-      const apiKey = (import.meta.env?.VITE_GEMINI_API_KEY) || process.env.GEMINI_API_KEY;
-      if (!apiKey) {
-        throw new Error('Chave da API do Gemini não configurada.');
-      }
-
-      const ai = new GoogleGenAI({ apiKey });
-      
       const benefitLabel = PREVIDENCIARIO_BENEFITS[selectedBenefit as keyof typeof PREVIDENCIARIO_BENEFITS]?.label || selectedBenefit;
 
       const fieldLabels: Record<string, string> = {
@@ -90,25 +82,29 @@ Sua tarefa:
 Formate a resposta em Markdown, sendo muito direto e empático.
 `;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.1-pro-preview',
-        contents: prompt
+      const responseText = await handleGeminiError(async () => {
+        const ai = getGeminiClient();
+        const response = await ai.models.generateContent({
+          model: 'gemini-3.1-pro-preview',
+          contents: prompt
+        });
+        return response.text;
       });
 
-      setResult(response.text || 'Não foi possível gerar a análise.');
+      setResult(responseText || 'Não foi possível gerar a análise.');
       
       // Save to localStorage for later retrieval after login/signup
-      if (response.text) {
+      if (responseText) {
         const analysisData = {
           benefit: selectedBenefit,
           formData,
           timestamp: new Date().toISOString()
         };
-        localStorage.setItem('pending_analysis_result', response.text);
+        localStorage.setItem('pending_analysis_result', responseText);
         localStorage.setItem('pending_analysis_data', JSON.stringify(analysisData));
         
         if (onAnalysisComplete) {
-          onAnalysisComplete(response.text, analysisData);
+          onAnalysisComplete(responseText, analysisData);
         }
       }
     } catch (err: any) {

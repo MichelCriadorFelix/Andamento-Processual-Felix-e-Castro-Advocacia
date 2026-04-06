@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { GoogleGenAI } from "@google/genai";
+import { getGeminiClient, handleGeminiError } from '../lib/gemini';
 import { MessageCircle, Send, X, Bot, User as UserIcon, MessageSquare, Phone, Gavel } from 'lucide-react';
 import { LegalCase, User } from '../types';
 import Markdown from 'react-markdown';
@@ -51,8 +51,6 @@ export const CaseChatbot: React.FC<CaseChatbotProps> = ({ activeCase, currentUse
     setIsLoading(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
-      
       const caseContext = `
         PROCESSO ATUAL:
         Título: ${activeCase.title}
@@ -95,16 +93,19 @@ export const CaseChatbot: React.FC<CaseChatbotProps> = ({ activeCase, currentUse
         ${caseContext}
       `;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: [
-          { role: 'user', parts: [{ text: systemInstruction }] },
-          ...messages.map(m => ({ role: m.role, parts: [{ text: m.text }] })),
-          { role: 'user', parts: [{ text: messageToSend }] }
-        ],
+      const aiText = await handleGeminiError(async () => {
+        const ai = getGeminiClient();
+        const response = await ai.models.generateContent({
+          model: "gemini-3-flash-preview",
+          contents: [
+            { role: 'user', parts: [{ text: systemInstruction }] },
+            ...messages.map(m => ({ role: m.role, parts: [{ text: m.text }] })),
+            { role: 'user', parts: [{ text: messageToSend }] }
+          ],
+        });
+        return response.text || "Desculpe, tive um problema. Tente novamente ou fale com nossa secretária.";
       });
 
-      const aiText = response.text || "Desculpe, tive um problema. Tente novamente ou fale com nossa secretária.";
       setMessages(prev => [...prev, { role: 'model', text: aiText }]);
       
       if (messageCount + 1 >= MAX_MESSAGES) {
