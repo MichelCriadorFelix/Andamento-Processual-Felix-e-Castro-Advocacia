@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Scale, LogIn, Shield, Clock, Gavel, User, Mail, Phone, Award, CheckCircle2, Users, RefreshCw } from 'lucide-react';
+import { Scale, LogIn, Shield, Clock, Gavel, User, Mail, Phone, Award, CheckCircle2, Users, RefreshCw, Download } from 'lucide-react';
 import { BenefitsAnalyzer } from './BenefitsAnalyzer';
 import { firebaseService } from '../services/firebaseService';
 import { TeamMember } from '../types';
@@ -9,9 +9,11 @@ interface LandingPageProps {
   isLoggedIn?: boolean;
   isLoggingIn?: boolean;
   onAnalysisComplete?: (result: string, data: any) => void;
+  isInstallable?: boolean;
+  onInstallClick?: () => void;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick, isLoggedIn, isLoggingIn, onAnalysisComplete }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick, isLoggedIn, isLoggingIn, onAnalysisComplete, isInstallable, onInstallClick }) => {
   const [team, setTeam] = useState<TeamMember[]>([]);
 
   useEffect(() => {
@@ -43,18 +45,29 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick, isLogged
               <p className="text-[10px] text-bordo-900 dark:text-bordo-400 font-bold tracking-[0.2em] uppercase mt-1">Advocacia Especializada</p>
             </div>
           </div>
-          <button 
-            onClick={onLoginClick}
-            disabled={isLoggingIn}
-            className="group flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-2.5 rounded-full font-semibold transition-all hover:scale-105 active:scale-95 shadow-xl shadow-slate-900/10 disabled:opacity-70 disabled:cursor-not-allowed"
-          >
-            {isLoggingIn ? (
-              <RefreshCw size={18} className="animate-spin" />
-            ) : (
-              <LogIn size={18} className="group-hover:translate-x-0.5 transition-transform" />
+          <div className="flex items-center gap-3">
+            {isInstallable && (
+              <button 
+                onClick={onInstallClick}
+                className="hidden sm:flex items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white px-4 py-2.5 rounded-full font-semibold transition-all hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 shadow-sm"
+              >
+                <Download size={18} />
+                <span>Instalar App</span>
+              </button>
             )}
-            <span>{isLoggingIn ? 'Entrando...' : (isLoggedIn ? 'Acessar Painel' : 'Área do Cliente')}</span>
-          </button>
+            <button 
+              onClick={onLoginClick}
+              disabled={isLoggingIn}
+              className="group flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-2.5 rounded-full font-semibold transition-all hover:scale-105 active:scale-95 shadow-xl shadow-slate-900/10 disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {isLoggingIn ? (
+                <RefreshCw size={18} className="animate-spin" />
+              ) : (
+                <LogIn size={18} className="group-hover:translate-x-0.5 transition-transform" />
+              )}
+              <span>{isLoggingIn ? 'Entrando...' : (isLoggedIn ? 'Acessar Painel' : 'Área do Cliente')}</span>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -192,7 +205,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick, isLogged
                 </li>
                 <li className="flex items-center gap-3">
                   <Mail size={16} className="text-bordo-400" />
-                  <span>contato@felixecastro.adv.br</span>
+                  <span>felixecastroadv@gmail.com</span>
                 </li>
               </ul>
             </div>

@@ -138,6 +138,8 @@ const AppContent: React.FC = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstallable, setIsInstallable] = useState(false);
 
   // View State
   const [view, setView] = useState<'LANDING' | 'DASHBOARD' | 'CASE_DETAIL' | 'CLIENT_MANAGER' | 'TEMPLATE_MANAGER' | 'TEAM_MANAGER'>('LANDING');
@@ -201,6 +203,47 @@ const AppContent: React.FC = () => {
   const [tempTeamImageFile, setTempTeamImageFile] = useState<File | null>(null);
   const [uploadingTeamImage, setUploadingTeamImage] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setIsInstallable(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    // Check if it's iOS and not already installed
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+    
+    if (isIOS && !isStandalone) {
+      setIsInstallable(true);
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setIsInstallable(false);
+      }
+      setDeferredPrompt(null);
+    } else {
+      // Fallback for iOS or already installed
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+      if (isIOS) {
+        alert('Para instalar no iOS: toque no ícone de Compartilhar e depois em "Adicionar à Tela de Início".');
+      } else {
+        alert('O aplicativo já está instalado ou seu navegador não suporta instalação direta. Tente instalar pelo menu do navegador.');
+      }
+    }
+  };
 
   useEffect(() => {
     if (currentUser && currentUser.role === 'CLIENT' && cases.length > 0) {
@@ -1106,6 +1149,8 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
             isLoggedIn={!!currentUser}
             isLoggingIn={isLoggingIn}
             onAnalysisComplete={handleAnalysisComplete}
+            isInstallable={isInstallable}
+            onInstallClick={handleInstallClick}
           />
         ) : (
           <div className="min-h-screen">
