@@ -40,7 +40,7 @@ export const ClientProfile: React.FC<ClientProfileProps> = ({ currentUser, onUpd
         {!isEditing ? (
           <button 
             onClick={() => setIsEditing(true)}
-            className="text-xs font-bold text-bordo-900 dark:text-bordo-400 uppercase tracking-widest hover:underline"
+            className="text-sm font-bold text-bordo-900 dark:text-bordo-400 uppercase tracking-widest hover:underline"
           >
             Editar Dados
           </button>
@@ -48,14 +48,14 @@ export const ClientProfile: React.FC<ClientProfileProps> = ({ currentUser, onUpd
           <div className="flex gap-2">
             <button 
               onClick={() => setIsEditing(false)}
-              className="text-xs font-bold text-slate-500 uppercase tracking-widest hover:underline"
+              className="text-sm font-bold text-slate-500 uppercase tracking-widest hover:underline"
             >
               Cancelar
             </button>
             <button 
               onClick={handleSave}
               disabled={isSaving}
-              className="flex items-center gap-1 text-xs font-bold text-white bg-bordo-900 px-3 py-1.5 rounded hover:bg-bordo-950 disabled:opacity-50"
+              className="flex items-center gap-1 text-sm font-bold text-white bg-bordo-900 px-3 py-1.5 rounded hover:bg-bordo-950 disabled:opacity-50"
             >
               {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
               Salvar
@@ -66,7 +66,7 @@ export const ClientProfile: React.FC<ClientProfileProps> = ({ currentUser, onUpd
       <div className="p-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+            <label className="block text-sm font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
               <Mail className="w-4 h-4" /> E-mail
             </label>
             {isEditing ? (
@@ -82,7 +82,7 @@ export const ClientProfile: React.FC<ClientProfileProps> = ({ currentUser, onUpd
             )}
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+            <label className="block text-sm font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
               <Phone className="w-4 h-4" /> WhatsApp
             </label>
             {isEditing ? (
@@ -98,7 +98,7 @@ export const ClientProfile: React.FC<ClientProfileProps> = ({ currentUser, onUpd
             )}
           </div>
           <div className="md:col-span-2">
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+            <label className="block text-sm font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
               <MapPin className="w-4 h-4" /> Endereço Completo
             </label>
             {isEditing ? (

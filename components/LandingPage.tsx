@@ -109,7 +109,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick, isLogged
       <section className="py-32 bg-white dark:bg-slate-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-5xl font-serif font-bold text-slate-900 dark:text-white mb-4">Nossa Equipe</h2>
+            <h2 className="text-4xl md:text-6xl tracking-tight font-serif font-bold text-slate-900 dark:text-white mb-4">Nossa Equipe</h2>
             <div className="w-20 h-1 bg-bordo-900 mx-auto mb-6"></div>
             <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
               Profissionais altamente qualificados e comprometidos com a excelência no atendimento previdenciário.
@@ -173,7 +173,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick, isLogged
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-bordo-900/5 rounded-full blur-3xl -z-10"></div>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-serif font-bold text-slate-900 dark:text-white mb-4">Análise Inteligente</h2>
+            <h2 className="text-4xl md:text-6xl tracking-tight font-serif font-bold text-slate-900 dark:text-white mb-4">Análise Inteligente</h2>
             <p className="text-slate-600 dark:text-slate-400">Descubra em poucos minutos suas chances de obter o benefício desejado.</p>
           </div>
           <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">

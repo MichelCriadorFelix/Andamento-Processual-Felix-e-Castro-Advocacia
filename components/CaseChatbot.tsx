@@ -135,7 +135,7 @@ export const CaseChatbot: React.FC<CaseChatbotProps> = ({ activeCase, currentUse
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
       {/* Chat Window */}
       {isOpen && (
-        <div className="w-[350px] md:w-[400px] h-[600px] bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col mb-4 animate-in slide-in-from-bottom-4 duration-300 overflow-hidden">
+        <div className="w-[90vw] md:w-[450px] h-[70vh] md:h-[650px] shadow-premium bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col mb-4 animate-in slide-in-from-bottom-4 duration-300 overflow-hidden">
           {/* Header */}
           <div className="p-4 bg-red-950 text-white flex justify-between items-center relative">
             <div className="flex items-center gap-3">
@@ -146,7 +146,7 @@ export const CaseChatbot: React.FC<CaseChatbotProps> = ({ activeCase, currentUse
                 <div className="absolute -bottom-1 -right-1 bg-green-500 w-3 h-3 rounded-full border-2 border-red-950"></div>
               </div>
               <div>
-                <h3 className="font-bold text-sm">Assistente do(a) {lawyerName}</h3>
+                <h3 className="font-bold text-base">Assistente do(a) {lawyerName}</h3>
                 <p className="text-[10px] text-red-200 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
                   Especialista Previdenciário
@@ -171,7 +171,7 @@ export const CaseChatbot: React.FC<CaseChatbotProps> = ({ activeCase, currentUse
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Olá, {currentUser.name}!</p>
+                  <p className="text-base font-bold text-slate-700 dark:text-slate-300">Olá, {currentUser.name}!</p>
                   <p className="text-xs text-slate-500 dark:text-slate-400 px-6 mt-2 leading-relaxed">
                     Sou o assistente virtual do(a) <strong>{lawyerName}</strong>. 
                     Escolha uma opção abaixo ou digite sua dúvida.
@@ -182,7 +182,7 @@ export const CaseChatbot: React.FC<CaseChatbotProps> = ({ activeCase, currentUse
             
             {messages.map((m, i) => (
               <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] p-3 rounded-2xl text-sm shadow-sm ${
+                <div className={`max-w-[85%] p-4 rounded-2xl text-lg text-base shadow-sm ${
                   m.role === 'user' 
                     ? 'bg-red-900 text-white rounded-tr-none' 
                     : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-600 rounded-tl-none'
@@ -194,7 +194,7 @@ export const CaseChatbot: React.FC<CaseChatbotProps> = ({ activeCase, currentUse
             
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-white dark:bg-slate-700 p-3 rounded-2xl rounded-tl-none shadow-sm border border-slate-100 dark:border-slate-600">
+                <div className="bg-white dark:bg-slate-700 p-4 rounded-2xl text-lg rounded-tl-none shadow-sm border border-slate-100 dark:border-slate-600">
                   <div className="flex gap-1">
                     <div className="w-1.5 h-1.5 bg-red-900 rounded-full animate-bounce"></div>
                     <div className="w-1.5 h-1.5 bg-red-900 rounded-full animate-bounce [animation-delay:0.2s]"></div>
@@ -242,7 +242,7 @@ export const CaseChatbot: React.FC<CaseChatbotProps> = ({ activeCase, currentUse
                 onKeyPress={e => e.key === 'Enter' && handleSendMessage()}
                 placeholder="Digite sua dúvida..."
                 disabled={messageCount >= MAX_MESSAGES + 1}
-                className="flex-1 bg-slate-100 dark:bg-slate-700 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-red-900 dark:text-white outline-none disabled:opacity-50"
+                className="flex-1 bg-slate-100 dark:bg-slate-700 border-none rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-red-900 dark:text-white outline-none disabled:opacity-50"
               />
               <button 
                 onClick={() => handleSendMessage()}

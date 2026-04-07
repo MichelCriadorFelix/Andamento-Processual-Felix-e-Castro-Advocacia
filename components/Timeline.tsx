@@ -79,10 +79,10 @@ export const Timeline: React.FC<TimelineProps> = ({ steps, onStepClick, isAdmin,
          <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-600 dark:border-red-500 p-4 shadow-sm flex items-start animate-fade-in">
             <Scale className="text-red-600 dark:text-red-500 w-6 h-6 mr-3 mt-1 flex-shrink-0" />
             <div>
-              <p className="text-red-900 dark:text-red-200 text-sm font-bold uppercase tracking-wide mb-1">
+              <p className="text-red-900 dark:text-red-200 text-base font-bold uppercase tracking-wide mb-1">
                 Atenção: Prazo de Mandado de Segurança
               </p>
-              <p className="text-red-800 dark:text-red-300 text-sm">
+              <p className="text-red-800 dark:text-red-300 text-base">
                 O prazo de 90 dias após {benefitType && PREVIDENCIARIO_BENEFITS[benefitType].hasExam ? 'a última perícia' : 'a entrada do requerimento'} foi ultrapassado. Preparar MS.
               </p>
             </div>
@@ -148,7 +148,7 @@ export const Timeline: React.FC<TimelineProps> = ({ steps, onStepClick, isAdmin,
 
               {/* Label */}
               <div className="mt-4 text-center px-1 w-full">
-                <p className={`text-xs md:text-sm font-bold uppercase tracking-wide leading-tight ${
+                <p className={`text-sm md:text-base font-bold uppercase tracking-wide leading-tight ${
                   isLocked ? 'text-slate-400 dark:text-slate-500' : 'text-red-950 dark:text-red-200'
                 }`}>
                   {step.label}
@@ -202,12 +202,12 @@ export const Timeline: React.FC<TimelineProps> = ({ steps, onStepClick, isAdmin,
            </div>
            <div>
              <h4 className="font-bold text-red-950 dark:text-red-200 mb-2">Dúvidas sobre o andamento?</h4>
-             <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+             <p className="text-base text-slate-600 dark:text-slate-400 leading-relaxed">
                Caso algum prazo tenha sido ultrapassado ou você não tenha entendido a última movimentação, 
                não hesite em entrar em contato com nossa secretaria. Estamos à disposição para esclarecer 
                cada etapa do seu processo.
              </p>
-             <p className="text-xs text-slate-500 mt-2 font-medium">
+             <p className="text-sm text-slate-500 mt-2 font-medium">
                Clique no botão do WhatsApp no canto inferior da tela para falar conosco.
              </p>
            </div>

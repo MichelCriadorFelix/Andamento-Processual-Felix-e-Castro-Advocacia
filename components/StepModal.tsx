@@ -368,7 +368,7 @@ export const StepModal: React.FC<StepModalProps> = ({
           </div>
           <div className="p-6 space-y-4">
              <div>
-              <label className="block text-sm font-bold text-slate-600 dark:text-slate-400 mb-1">Nome da Etapa</label>
+              <label className="block text-base font-bold text-slate-600 dark:text-slate-400 mb-1">Nome da Etapa</label>
               <input 
                 className="w-full border p-2 rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                 value={newStepLabel}
@@ -377,7 +377,7 @@ export const StepModal: React.FC<StepModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-slate-600 dark:text-slate-400 mb-1">Prazo Previsto (Dias)</label>
+              <label className="block text-base font-bold text-slate-600 dark:text-slate-400 mb-1">Prazo Previsto (Dias)</label>
               <input 
                 type="number"
                 className="w-full border p-2 rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
@@ -386,7 +386,7 @@ export const StepModal: React.FC<StepModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-slate-600 dark:text-slate-400 mb-1">Inserir Onde?</label>
+              <label className="block text-base font-bold text-slate-600 dark:text-slate-400 mb-1">Inserir Onde?</label>
               <select 
                 className="w-full border p-2 rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                 value={insertPosition}
@@ -407,7 +407,7 @@ export const StepModal: React.FC<StepModalProps> = ({
                 onAdd(newStepLabel, pos, newStepDuration);
                 onClose();
               }}
-              className="px-4 py-2 bg-red-950 text-white rounded font-bold uppercase text-xs"
+              className="px-4 py-2 bg-red-950 text-white rounded font-bold uppercase text-sm"
             >
               Adicionar
             </button>
@@ -454,14 +454,14 @@ export const StepModal: React.FC<StepModalProps> = ({
               {isEditingLabel ? (
                 <div className="flex items-center gap-2">
                   <input 
-                    className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm p-1 rounded border border-red-300"
+                    className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-base p-1 rounded border border-red-300"
                     value={editedLabel}
                     onChange={e => setEditedLabel(e.target.value)}
                     autoFocus
                   />
                   <input 
                     type="number"
-                    className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm p-1 rounded border border-red-300 w-16"
+                    className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-base p-1 rounded border border-red-300 w-16"
                     value={editedDuration}
                     onChange={e => setEditedDuration(Number(e.target.value))}
                   />
@@ -479,7 +479,7 @@ export const StepModal: React.FC<StepModalProps> = ({
                 <>
                   <h3 className="text-white font-serif font-medium text-lg truncate">
                     {step.label} 
-                    <span className="text-xs text-red-300 ml-2 font-sans border border-red-800 px-1 rounded">
+                    <span className="text-sm text-red-300 ml-2 font-sans border border-red-800 px-1 rounded">
                       {step.expectedDuration ? `${step.expectedDuration} dias` : 'S/P'}
                     </span>
                   </h3>
@@ -516,10 +516,10 @@ export const StepModal: React.FC<StepModalProps> = ({
                 />
               </div>
               <div className="p-4 bg-slate-800 flex justify-between items-center border-t border-slate-700">
-                 <button onClick={() => setCropIndex(null)} className="text-white font-bold text-sm px-4 py-2 hover:bg-slate-700 rounded">Cancelar</button>
+                 <button onClick={() => setCropIndex(null)} className="text-white font-bold text-base px-4 py-2 hover:bg-slate-700 rounded">Cancelar</button>
                  <button 
                    onClick={confirmCrop}
-                   className="bg-green-600 text-white font-bold text-sm px-4 py-2 rounded flex items-center gap-2 hover:bg-green-700"
+                   className="bg-green-600 text-white font-bold text-base px-4 py-2 rounded flex items-center gap-2 hover:bg-green-700"
                  >
                    <CheckSquare className="w-4 h-4"/> Confirmar Recorte
                  </button>
@@ -528,7 +528,7 @@ export const StepModal: React.FC<StepModalProps> = ({
           )}
 
           <div className="mb-4 flex justify-between items-center">
-             <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold tracking-wide ${
+             <span className={`inline-block px-3 py-1 rounded-full text-sm font-bold tracking-wide ${
               step.status === 'COMPLETED' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' :
               step.status === 'CURRENT' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400' :
               'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
@@ -537,7 +537,7 @@ export const StepModal: React.FC<StepModalProps> = ({
             </span>
             
             {step.status === 'CURRENT' && (
-              <div className={`text-xs font-bold flex items-center gap-1 ${isDelayed ? 'text-red-600 animate-pulse' : 'text-green-600'}`}>
+              <div className={`text-sm font-bold flex items-center gap-1 ${isDelayed ? 'text-red-600 animate-pulse' : 'text-green-600'}`}>
                 <Clock className="w-4 h-4"/>
                 {daysCount} dias corridos
                 {isDelayed && <AlertTriangle className="w-4 h-4 ml-1"/>}
@@ -548,7 +548,7 @@ export const StepModal: React.FC<StepModalProps> = ({
           {isDelayed && step.status === 'CURRENT' && (
             <div className="mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 rounded flex items-center gap-3 animate-bounce">
               <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-500" />
-              <p className="text-xs font-bold text-red-800 dark:text-red-300">
+              <p className="text-sm font-bold text-red-800 dark:text-red-300">
                 ATENÇÃO: Prazo de {step.expectedDuration} dias ultrapassado!
               </p>
             </div>
@@ -574,7 +574,7 @@ export const StepModal: React.FC<StepModalProps> = ({
                               />
                               <button 
                                 onClick={() => uploadInputRef.current?.click()}
-                                className="text-xs bg-slate-200 text-slate-700 px-3 py-1.5 rounded flex items-center gap-1 hover:bg-slate-300 border border-slate-300"
+                                className="text-sm bg-slate-200 text-slate-700 px-3 py-1.5 rounded flex items-center gap-1 hover:bg-slate-300 border border-slate-300"
                                 title="Upload de Arquivo (PDF ou Imagem)"
                               >
                                 <UploadCloud className="w-3 h-3"/> Upload
@@ -582,7 +582,7 @@ export const StepModal: React.FC<StepModalProps> = ({
 
                               <button 
                                 onClick={() => setIsScanning(true)} 
-                                className="text-xs bg-red-950 text-white px-3 py-1.5 rounded flex items-center gap-1 hover:bg-red-900"
+                                className="text-sm bg-red-950 text-white px-3 py-1.5 rounded flex items-center gap-1 hover:bg-red-900"
                                 title="Digitalizar com Câmera"
                               >
                                 <Camera className="w-3 h-3"/> Digitalizar
@@ -593,11 +593,11 @@ export const StepModal: React.FC<StepModalProps> = ({
 
                        {showDirectUploadNameInput && (
                           <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded animate-in fade-in slide-in-from-top-2">
-                            <label className="block text-xs font-bold text-blue-800 dark:text-blue-400 uppercase mb-2">Nome do Documento para Upload</label>
+                            <label className="block text-sm font-bold text-blue-800 dark:text-blue-400 uppercase mb-2">Nome do Documento para Upload</label>
                             <div className="flex gap-2">
                               <input 
                                 type="text"
-                                className="flex-1 border p-2 text-sm rounded bg-white dark:bg-slate-800 dark:text-white dark:border-slate-600"
+                                className="flex-1 border p-2 text-base rounded bg-white dark:bg-slate-800 dark:text-white dark:border-slate-600"
                                 placeholder="Ex: Identidade, Procuração..."
                                 value={directUploadName}
                                 onChange={e => setDirectUploadName(e.target.value)}
@@ -606,7 +606,7 @@ export const StepModal: React.FC<StepModalProps> = ({
                               <button 
                                 onClick={confirmDirectUpload}
                                 disabled={!directUploadName || isProcessing}
-                                className="bg-blue-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                                className="bg-blue-600 text-white px-4 py-2 rounded text-base font-bold hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
                               >
                                 {isProcessing ? <Loader2 className="w-4 h-4 animate-spin"/> : <UploadCloud className="w-4 h-4"/>}
                                 Salvar
@@ -617,7 +617,7 @@ export const StepModal: React.FC<StepModalProps> = ({
                                   setPendingFile(null);
                                   if (uploadInputRef.current) uploadInputRef.current.value = '';
                                 }}
-                                className="px-3 py-2 text-sm text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 rounded"
+                                className="px-3 py-2 text-base text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 rounded"
                               >
                                 Cancelar
                               </button>
@@ -626,7 +626,7 @@ export const StepModal: React.FC<StepModalProps> = ({
                         )}
 
                        {documents.length === 0 ? (
-                         <div className="text-center p-4 bg-slate-50 dark:bg-slate-800 rounded border border-dashed border-slate-300 dark:border-slate-600 text-xs text-slate-500">
+                         <div className="text-center p-4 bg-slate-50 dark:bg-slate-800 rounded border border-dashed border-slate-300 dark:border-slate-600 text-sm text-slate-500">
                            Nenhum documento digitalizado ainda.
                          </div>
                        ) : (
@@ -637,7 +637,7 @@ export const StepModal: React.FC<StepModalProps> = ({
                                  <div className="flex items-center gap-2 overflow-hidden">
                                    <div className="bg-red-100 dark:bg-red-900/50 p-1.5 rounded text-red-800 dark:text-red-300"><FileText className="w-4 h-4"/></div>
                                    <div className="flex flex-col truncate">
-                                     <span className="text-sm font-medium truncate dark:text-slate-200">{doc.name}</span>
+                                     <span className="text-base font-medium truncate dark:text-slate-200">{doc.name}</span>
                                      <span className="text-[10px] text-slate-500">{new Date(doc.created_at).toLocaleDateString()}</span>
                                    </div>
                                  </div>
@@ -695,13 +695,13 @@ export const StepModal: React.FC<StepModalProps> = ({
                     </div>
                   ) : (
                     <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded border border-red-200 dark:border-red-900/30">
-                      <h4 className="font-bold text-red-900 dark:text-red-300 mb-3 text-sm">Nova Digitalização</h4>
+                      <h4 className="font-bold text-red-900 dark:text-red-300 mb-3 text-base">Nova Digitalização</h4>
                       
                       <div className="space-y-3">
                         <div>
-                          <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nome do Documento</label>
+                          <label className="block text-sm font-bold text-slate-500 uppercase mb-1">Nome do Documento</label>
                           <select 
-                             className="w-full border p-2 text-sm rounded dark:bg-slate-700 dark:text-white"
+                             className="w-full border p-2 text-base rounded dark:bg-slate-700 dark:text-white"
                              value={docName}
                              onChange={(e) => setDocName(e.target.value)}
                           >
@@ -718,7 +718,7 @@ export const StepModal: React.FC<StepModalProps> = ({
                             disabled={isProcessing}
                           >
                              <Camera className="w-6 h-6 text-slate-400 mb-1"/>
-                             <span className="text-xs font-bold text-slate-500">Tirar Fotos</span>
+                             <span className="text-sm font-bold text-slate-500">Tirar Fotos</span>
                              <input 
                                type="file" 
                                ref={fileInputRef} 
@@ -752,8 +752,8 @@ export const StepModal: React.FC<StepModalProps> = ({
                         </div>
 
                         <div className="flex justify-end gap-2 pt-2">
-                          <button onClick={() => setIsScanning(false)} className="px-3 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-200 rounded">Cancelar</button>
-                          <button onClick={handleSaveScannedDocument} disabled={isProcessing || capturedImages.length === 0} className="px-3 py-1.5 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded flex items-center gap-1 disabled:opacity-50">
+                          <button onClick={() => setIsScanning(false)} className="px-3 py-1.5 text-sm font-bold text-slate-500 hover:bg-slate-200 rounded">Cancelar</button>
+                          <button onClick={handleSaveScannedDocument} disabled={isProcessing || capturedImages.length === 0} className="px-3 py-1.5 text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded flex items-center gap-1 disabled:opacity-50">
                             {isProcessing ? <Loader2 className="w-3 h-3 animate-spin"/> : <Save className="w-3 h-3"/>} Gerar PDF e Salvar
                           </button>
                         </div>
@@ -766,19 +766,19 @@ export const StepModal: React.FC<StepModalProps> = ({
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-bold text-red-950 dark:text-red-200 mb-2">
+              <label className="block text-base font-bold text-red-950 dark:text-red-200 mb-2">
                 Comentários do Advogado
               </label>
               {isAdmin ? (
                 <textarea
-                  className="w-full border border-slate-300 dark:border-slate-600 rounded-none p-3 text-sm focus:ring-2 focus:ring-red-900 focus:border-transparent outline-none bg-slate-50 dark:bg-slate-900 dark:text-slate-200"
+                  className="w-full border border-slate-300 dark:border-slate-600 rounded-none p-3 text-base focus:ring-2 focus:ring-red-900 focus:border-transparent outline-none bg-slate-50 dark:bg-slate-900 dark:text-slate-200"
                   rows={4}
                   placeholder="Descreva detalhes sobre o andamento desta fase..."
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                 />
               ) : (
-                <div className="bg-slate-50 dark:bg-slate-700/30 border-l-4 border-red-900 dark:border-red-700 p-4 text-sm text-slate-800 dark:text-slate-300 italic min-h-[100px]">
+                <div className="bg-slate-50 dark:bg-slate-700/30 border-l-4 border-red-900 dark:border-red-700 p-4 text-base text-slate-800 dark:text-slate-300 italic min-h-[100px]">
                   {step.adminComment || "Nenhum comentário adicionado."}
                 </div>
               )}
@@ -787,12 +787,12 @@ export const StepModal: React.FC<StepModalProps> = ({
             {isAdmin && step.status !== 'COMPLETED' && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-amber-50 dark:bg-amber-900/20 p-4 border border-amber-200 dark:border-amber-800 rounded">
-                  <label className="block text-xs font-bold text-amber-800 dark:text-amber-400 mb-2 uppercase flex items-center">
+                  <label className="block text-sm font-bold text-amber-800 dark:text-amber-400 mb-2 uppercase flex items-center">
                     <Calendar className="w-4 h-4 mr-1"/> Data da Conclusão
                   </label>
                   <input 
                     type="date"
-                    className="w-full border p-2 text-sm rounded bg-white dark:bg-slate-800 dark:text-white dark:border-slate-600"
+                    className="w-full border p-2 text-base rounded bg-white dark:bg-slate-800 dark:text-white dark:border-slate-600"
                     value={completionDate}
                     onChange={e => setCompletionDate(e.target.value)}
                   />
@@ -802,12 +802,12 @@ export const StepModal: React.FC<StepModalProps> = ({
                 </div>
 
                 <div className="bg-blue-50 dark:bg-blue-900/20 p-4 border border-blue-200 dark:border-blue-800 rounded">
-                  <label className="block text-xs font-bold text-blue-800 dark:text-blue-400 mb-2 uppercase flex items-center">
+                  <label className="block text-sm font-bold text-blue-800 dark:text-blue-400 mb-2 uppercase flex items-center">
                     <Calendar className="w-4 h-4 mr-1"/> Data do Agendamento
                   </label>
                   <input 
                     type="date"
-                    className="w-full border p-2 text-sm rounded bg-white dark:bg-slate-800 dark:text-white dark:border-slate-600"
+                    className="w-full border p-2 text-base rounded bg-white dark:bg-slate-800 dark:text-white dark:border-slate-600"
                     value={appointmentDate}
                     onChange={e => setAppointmentDate(e.target.value)}
                   />
@@ -823,8 +823,8 @@ export const StepModal: React.FC<StepModalProps> = ({
                  <div className="bg-green-50 dark:bg-green-900/20 p-3 border border-green-200 dark:border-green-800 rounded flex items-center">
                    <CheckSquare className="w-5 h-5 text-green-600 dark:text-green-500 mr-2" />
                    <div>
-                      <p className="text-sm font-bold text-green-800 dark:text-green-300">Etapa Concluída</p>
-                      <p className="text-xs text-green-700 dark:text-green-400">
+                      <p className="text-base font-bold text-green-800 dark:text-green-300">Etapa Concluída</p>
+                      <p className="text-sm text-green-700 dark:text-green-400">
                         Em: {new Date(step.completedDate || '').toLocaleDateString()}
                       </p>
                    </div>
@@ -833,8 +833,8 @@ export const StepModal: React.FC<StepModalProps> = ({
                    <div className="bg-blue-50 dark:bg-blue-900/20 p-3 border border-blue-200 dark:border-blue-800 rounded flex items-center">
                      <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-500 mr-2" />
                      <div>
-                        <p className="text-sm font-bold text-blue-800 dark:text-blue-300">Agendamento Realizado</p>
-                        <p className="text-xs text-blue-700 dark:text-blue-400">
+                        <p className="text-base font-bold text-blue-800 dark:text-blue-300">Agendamento Realizado</p>
+                        <p className="text-sm text-blue-700 dark:text-blue-400">
                           Data: {new Date(step.appointmentDate).toLocaleDateString()}
                         </p>
                      </div>
@@ -846,7 +846,7 @@ export const StepModal: React.FC<StepModalProps> = ({
         </div>
 
         <div className="bg-slate-50 dark:bg-slate-700/50 px-6 py-4 flex justify-end gap-3 border-t border-slate-200 dark:border-slate-700">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-slate-600 dark:text-slate-300 font-medium">Fechar</button>
+          <button onClick={onClose} className="px-4 py-2 text-base text-slate-600 dark:text-slate-300 font-medium">Fechar</button>
           
           {isAdmin && (
             <>
@@ -858,7 +858,7 @@ export const StepModal: React.FC<StepModalProps> = ({
                       onClose();
                     }
                   }}
-                  className="flex items-center px-4 py-2 bg-amber-500 text-white border border-amber-600 rounded-none text-sm font-bold uppercase tracking-wider hover:bg-amber-600 shadow-md"
+                  className="flex items-center px-4 py-2 bg-amber-500 text-white border border-amber-600 rounded-none text-base font-bold uppercase tracking-wider hover:bg-amber-600 shadow-md"
                 >
                   <RefreshCcw className="w-4 h-4 mr-2" /> Desfazer / Reabrir
                 </button>
@@ -868,7 +868,7 @@ export const StepModal: React.FC<StepModalProps> = ({
                     if (onUpdate) onUpdate(comment, true, completionDate, appointmentDate);
                     onClose();
                   }}
-                  className="flex items-center px-4 py-2 bg-red-950 dark:bg-red-800 text-white rounded-none text-sm font-bold hover:bg-red-900 dark:hover:bg-red-700 shadow-lg uppercase tracking-wider"
+                  className="flex items-center px-4 py-2 bg-red-950 dark:bg-red-800 text-white rounded-none text-base font-bold hover:bg-red-900 dark:hover:bg-red-700 shadow-lg uppercase tracking-wider"
                 >
                   <CheckSquare className="w-4 h-4 mr-2" /> Concluir Etapa
                 </button>
@@ -876,7 +876,7 @@ export const StepModal: React.FC<StepModalProps> = ({
 
               <button 
                 onClick={handleGeneralSave}
-                className="flex items-center px-4 py-2 bg-white dark:bg-slate-800 border border-red-900 dark:border-slate-500 text-red-900 dark:text-slate-300 rounded-none text-sm font-bold uppercase tracking-wider"
+                className="flex items-center px-4 py-2 bg-white dark:bg-slate-800 border border-red-900 dark:border-slate-500 text-red-900 dark:text-slate-300 rounded-none text-base font-bold uppercase tracking-wider"
               >
                 <Save className="w-4 h-4 mr-2" /> Salvar
               </button>

@@ -136,11 +136,11 @@ Formate a resposta em Markdown, sendo muito direto e empático.
         {/* Common Fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sexo</label>
+            <label className="block text-base md:text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">Sexo</label>
             <select 
               value={formData.sex || ''} 
               onChange={(e) => handleInputChange('sex', e.target.value)}
-              className="w-full p-2.5 border border-gray-300 dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
+              className="w-full p-3 md:p-4 text-base md:text-lg border border-gray-300 shadow-sm dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
             >
               <option value="">Selecione...</option>
               <option value="Masculino">Masculino</option>
@@ -148,21 +148,21 @@ Formate a resposta em Markdown, sendo muito direto e empático.
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Idade</label>
+            <label className="block text-base md:text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">Idade</label>
             <input 
               type="number" 
               value={formData.age || ''} 
               onChange={(e) => handleInputChange('age', e.target.value)}
               placeholder="Ex: 60"
-              className="w-full p-2.5 border border-gray-300 dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
+              className="w-full p-3 md:p-4 text-base md:text-lg border border-gray-300 shadow-sm dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Já pediu no INSS e foi negado?</label>
+            <label className="block text-base md:text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">Já pediu no INSS e foi negado?</label>
             <select 
               value={formData.inssDenied || ''} 
               onChange={(e) => handleInputChange('inssDenied', e.target.value)}
-              className="w-full p-2.5 border border-gray-300 dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
+              className="w-full p-3 md:p-4 text-base md:text-lg border border-gray-300 shadow-sm dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
             >
               <option value="">Selecione...</option>
               <option value="Sim">Sim</option>
@@ -170,11 +170,11 @@ Formate a resposta em Markdown, sendo muito direto e empático.
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Já entrou na justiça e foi negado?</label>
+            <label className="block text-base md:text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">Já entrou na justiça e foi negado?</label>
             <select 
               value={formData.courtDenied || ''} 
               onChange={(e) => handleInputChange('courtDenied', e.target.value)}
-              className="w-full p-2.5 border border-gray-300 dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
+              className="w-full p-3 md:p-4 text-base md:text-lg border border-gray-300 shadow-sm dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
             >
               <option value="">Selecione...</option>
               <option value="Sim">Sim</option>
@@ -187,38 +187,38 @@ Formate a resposta em Markdown, sendo muito direto e empático.
         {(isRetirement || isDisability || isMaternity) && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tempo de Contribuição</label>
+              <label className="block text-base md:text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">Tempo de Contribuição</label>
               <div className="grid grid-cols-3 gap-2">
                 <input 
                   type="number" 
                   value={formData.contribYears || ''} 
                   onChange={(e) => handleInputChange('contribYears', e.target.value)}
                   placeholder="Anos"
-                  className="w-full p-2.5 border border-gray-300 dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
+                  className="w-full p-3 md:p-4 text-base md:text-lg border border-gray-300 shadow-sm dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
                 />
                 <input 
                   type="number" 
                   value={formData.contribMonths || ''} 
                   onChange={(e) => handleInputChange('contribMonths', e.target.value)}
                   placeholder="Meses"
-                  className="w-full p-2.5 border border-gray-300 dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
+                  className="w-full p-3 md:p-4 text-base md:text-lg border border-gray-300 shadow-sm dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
                 />
                 <input 
                   type="number" 
                   value={formData.contribDays || ''} 
                   onChange={(e) => handleInputChange('contribDays', e.target.value)}
                   placeholder="Dias"
-                  className="w-full p-2.5 border border-gray-300 dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
+                  className="w-full p-3 md:p-4 text-base md:text-lg border border-gray-300 shadow-sm dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Última contribuição ao INSS</label>
+              <label className="block text-base md:text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">Última contribuição ao INSS</label>
               <input 
                 type="month" 
                 value={formData.lastContribution || ''} 
                 onChange={(e) => handleInputChange('lastContribution', e.target.value)}
-                className="w-full p-2.5 border border-gray-300 dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
+                className="w-full p-3 md:p-4 text-base md:text-lg border border-gray-300 shadow-sm dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
               />
             </div>
           </div>
@@ -228,11 +228,11 @@ Formate a resposta em Markdown, sendo muito direto e empático.
         {selectedBenefit === 'APOSENTADORIA_ESPECIAL' && (
           <div className="grid grid-cols-1 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Possui PPP (Perfil Profissiográfico Previdenciário) ou formulários antigos?</label>
+              <label className="block text-base md:text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">Possui PPP (Perfil Profissiográfico Previdenciário) ou formulários antigos?</label>
               <select 
                 value={formData.hasPPP || ''} 
                 onChange={(e) => handleInputChange('hasPPP', e.target.value)}
-                className="w-full p-2.5 border border-gray-300 dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
+                className="w-full p-3 md:p-4 text-base md:text-lg border border-gray-300 shadow-sm dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
               >
                 <option value="">Selecione...</option>
                 <option value="Sim, tenho todos">Sim, tenho todos</option>
@@ -248,11 +248,11 @@ Formate a resposta em Markdown, sendo muito direto e empático.
         {needsMedicalReport && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Possui laudo médico?</label>
+              <label className="block text-base md:text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">Possui laudo médico?</label>
               <select 
                 value={formData.hasMedicalReport || ''} 
                 onChange={(e) => handleInputChange('hasMedicalReport', e.target.value)}
-                className="w-full p-2.5 border border-gray-300 dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
+                className="w-full p-3 md:p-4 text-base md:text-lg border border-gray-300 shadow-sm dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
               >
                 <option value="">Selecione...</option>
                 <option value="Sim, atualizado (menos de 6 meses)">Sim, atualizado (menos de 6 meses)</option>
@@ -261,13 +261,13 @@ Formate a resposta em Markdown, sendo muito direto e empático.
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Qual a doença/deficiência?</label>
+              <label className="block text-base md:text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">Qual a doença/deficiência?</label>
               <input 
                 type="text" 
                 value={formData.illness || ''} 
                 onChange={(e) => handleInputChange('illness', e.target.value)}
                 placeholder="Ex: Hérnia de disco"
-                className="w-full p-2.5 border border-gray-300 dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
+                className="w-full p-3 md:p-4 text-base md:text-lg border border-gray-300 shadow-sm dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
               />
             </div>
           </div>
@@ -277,11 +277,11 @@ Formate a resposta em Markdown, sendo muito direto e empático.
         {isBPC && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Inscrito no Cadastro Único (CadÚnico)?</label>
+              <label className="block text-base md:text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">Inscrito no Cadastro Único (CadÚnico)?</label>
               <select 
                 value={formData.hasCadUnico || ''} 
                 onChange={(e) => handleInputChange('hasCadUnico', e.target.value)}
-                className="w-full p-2.5 border border-gray-300 dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
+                className="w-full p-3 md:p-4 text-base md:text-lg border border-gray-300 shadow-sm dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
               >
                 <option value="">Selecione...</option>
                 <option value="Sim">Sim</option>
@@ -289,11 +289,11 @@ Formate a resposta em Markdown, sendo muito direto e empático.
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Recebe Bolsa Família?</label>
+              <label className="block text-base md:text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">Recebe Bolsa Família?</label>
               <select 
                 value={formData.receivesBolsaFamilia || ''} 
                 onChange={(e) => handleInputChange('receivesBolsaFamilia', e.target.value)}
-                className="w-full p-2.5 border border-gray-300 dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
+                className="w-full p-3 md:p-4 text-base md:text-lg border border-gray-300 shadow-sm dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
               >
                 <option value="">Selecione...</option>
                 <option value="Sim">Sim</option>
@@ -301,23 +301,23 @@ Formate a resposta em Markdown, sendo muito direto e empático.
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Renda familiar total (R$)</label>
+              <label className="block text-base md:text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">Renda familiar total (R$)</label>
               <input 
                 type="number" 
                 value={formData.familyIncome || ''} 
                 onChange={(e) => handleInputChange('familyIncome', e.target.value)}
                 placeholder="Ex: 1412"
-                className="w-full p-2.5 border border-gray-300 dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
+                className="w-full p-3 md:p-4 text-base md:text-lg border border-gray-300 shadow-sm dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quantas pessoas moram na casa?</label>
+              <label className="block text-base md:text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">Quantas pessoas moram na casa?</label>
               <input 
                 type="number" 
                 value={formData.familyMembers || ''} 
                 onChange={(e) => handleInputChange('familyMembers', e.target.value)}
                 placeholder="Ex: 4"
-                className="w-full p-2.5 border border-gray-300 dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
+                className="w-full p-3 md:p-4 text-base md:text-lg border border-gray-300 shadow-sm dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
               />
             </div>
           </div>
@@ -327,20 +327,20 @@ Formate a resposta em Markdown, sendo muito direto e empático.
         {isDeath && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data do óbito</label>
+              <label className="block text-base md:text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">Data do óbito</label>
               <input 
                 type="date" 
                 value={formData.dateOfDeath || ''} 
                 onChange={(e) => handleInputChange('dateOfDeath', e.target.value)}
-                className="w-full p-2.5 border border-gray-300 dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
+                className="w-full p-3 md:p-4 text-base md:text-lg border border-gray-300 shadow-sm dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Qual seu parentesco com o falecido?</label>
+              <label className="block text-base md:text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">Qual seu parentesco com o falecido?</label>
               <select 
                 value={formData.relationship || ''} 
                 onChange={(e) => handleInputChange('relationship', e.target.value)}
-                className="w-full p-2.5 border border-gray-300 dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
+                className="w-full p-3 md:p-4 text-base md:text-lg border border-gray-300 shadow-sm dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
               >
                 <option value="">Selecione...</option>
                 <option value="Cônjuge/Companheiro(a)">Cônjuge/Companheiro(a)</option>
@@ -351,11 +351,11 @@ Formate a resposta em Markdown, sendo muito direto e empático.
               </select>
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">O falecido estava contribuindo para o INSS ou recebia benefício?</label>
+              <label className="block text-base md:text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">O falecido estava contribuindo para o INSS ou recebia benefício?</label>
               <select 
                 value={formData.deceasedWasContributing || ''} 
                 onChange={(e) => handleInputChange('deceasedWasContributing', e.target.value)}
-                className="w-full p-2.5 border border-gray-300 dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
+                className="w-full p-3 md:p-4 text-base md:text-lg border border-gray-300 shadow-sm dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
               >
                 <option value="">Selecione...</option>
                 <option value="Sim, contribuía">Sim, contribuía</option>
@@ -371,20 +371,20 @@ Formate a resposta em Markdown, sendo muito direto e empático.
         {isMaternity && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data do parto/adoção (ou previsão)</label>
+              <label className="block text-base md:text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">Data do parto/adoção (ou previsão)</label>
               <input 
                 type="date" 
                 value={formData.maternityDate || ''} 
                 onChange={(e) => handleInputChange('maternityDate', e.target.value)}
-                className="w-full p-2.5 border border-gray-300 dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
+                className="w-full p-3 md:p-4 text-base md:text-lg border border-gray-300 shadow-sm dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Situação de trabalho atual</label>
+              <label className="block text-base md:text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">Situação de trabalho atual</label>
               <select 
                 value={formData.workStatus || ''} 
                 onChange={(e) => handleInputChange('workStatus', e.target.value)}
-                className="w-full p-2.5 border border-gray-300 dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
+                className="w-full p-3 md:p-4 text-base md:text-lg border border-gray-300 shadow-sm dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
               >
                 <option value="">Selecione...</option>
                 <option value="Empregada (CLT)">Empregada (CLT)</option>
@@ -400,20 +400,20 @@ Formate a resposta em Markdown, sendo muito direto e empático.
         {isPrison && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data da prisão</label>
+              <label className="block text-base md:text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">Data da prisão</label>
               <input 
                 type="date" 
                 value={formData.prisonDate || ''} 
                 onChange={(e) => handleInputChange('prisonDate', e.target.value)}
-                className="w-full p-2.5 border border-gray-300 dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
+                className="w-full p-3 md:p-4 text-base md:text-lg border border-gray-300 shadow-sm dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Regime de prisão</label>
+              <label className="block text-base md:text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">Regime de prisão</label>
               <select 
                 value={formData.prisonRegime || ''} 
                 onChange={(e) => handleInputChange('prisonRegime', e.target.value)}
-                className="w-full p-2.5 border border-gray-300 dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
+                className="w-full p-3 md:p-4 text-base md:text-lg border border-gray-300 shadow-sm dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none"
               >
                 <option value="">Selecione...</option>
                 <option value="Fechado">Fechado</option>
@@ -426,12 +426,12 @@ Formate a resposta em Markdown, sendo muito direto e empático.
 
         {/* Documents */}
         <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quais documentos você já possui? (Opcional)</label>
+          <label className="block text-base md:text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">Quais documentos você já possui? (Opcional)</label>
           <textarea 
             value={formData.documents || ''} 
             onChange={(e) => handleInputChange('documents', e.target.value)}
             placeholder="Ex: RG, CPF, Carteira de Trabalho, Laudos médicos, PPP..."
-            className="w-full p-2.5 border border-gray-300 dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none min-h-[80px]"
+            className="w-full p-3 md:p-4 text-base md:text-lg border border-gray-300 shadow-sm dark:border-bordo-900 rounded-lg bg-gray-50 dark:bg-bordo-900 dark:text-white focus:ring-2 focus:ring-bordo-900 outline-none min-h-[80px]"
           />
         </div>
       </div>
@@ -452,7 +452,7 @@ Formate a resposta em Markdown, sendo muito direto e empático.
       </p>
 
       <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Qual benefício você deseja analisar?</label>
+        <label className="block text-base md:text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Qual benefício você deseja analisar?</label>
         <select 
           value={selectedBenefit} 
           onChange={(e) => {

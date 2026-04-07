@@ -27,19 +27,36 @@
                 900: '#450a0a',
                 950: '#2a0505',
               }
+            },
+            fontSize: {
+              'base': '1.125rem', // 18px base for better readability
+              'lg': '1.25rem',
+              'xl': '1.5rem',
+              '2xl': '1.875rem',
+              '3xl': '2.25rem',
+            },
+            boxShadow: {
+              'premium': '0 10px 40px -10px rgba(0,0,0,0.08)',
+              'premium-hover': '0 20px 40px -10px rgba(0,0,0,0.12)',
             }
           }
         }
       }
     </script>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap');
       
       body {
         font-family: 'Inter', sans-serif;
+        font-size: 18px; /* Base size increased for elderly users */
+        line-height: 1.6;
+        color: #1e293b; /* slate-800 for better contrast */
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
       h1, h2, h3, .font-serif {
         font-family: 'Playfair Display', serif;
+        letter-spacing: -0.02em;
       }
       
       .hide-scrollbar::-webkit-scrollbar {
