@@ -13,6 +13,7 @@ import { LandingPage } from './components/LandingPage';
 import { QualificationCard } from './components/QualificationCard';
 import { QualificationModal } from './components/QualificationModal';
 import { ClientProfile } from './components/ClientProfile';
+import { ContactSuccess } from './components/ContactSuccess';
 import Markdown from 'react-markdown';
 import { Scale, LogOut, User as UserIcon, FileText, Briefcase, Users, PlusCircle, Moon, Sun, MessageCircle, Gavel, CheckCheck, ArrowRightLeft, Edit, Trash2, Archive, ChevronLeft, ChevronRight, Search, Lock, Unlock, Settings, List, Plus, X, MoreVertical, Wifi, WifiOff, RefreshCw, Globe, BriefcaseIcon, Shield, AlertTriangle, AlertCircle, Bot, Calculator, Phone, Bell, Download, Camera, Loader2 } from 'lucide-react';
 import { PREVIDENCIARIO_BENEFITS } from './constants';
@@ -142,8 +143,23 @@ const AppContent: React.FC = () => {
   const [isInstallable, setIsInstallable] = useState(false);
 
   // View State
-  const [view, setView] = useState<'LANDING' | 'DASHBOARD' | 'CASE_DETAIL' | 'CLIENT_MANAGER' | 'TEMPLATE_MANAGER' | 'TEAM_MANAGER'>('LANDING');
+  const [view, setView] = useState<'LANDING' | 'DASHBOARD' | 'CASE_DETAIL' | 'CLIENT_MANAGER' | 'TEMPLATE_MANAGER' | 'TEAM_MANAGER' | 'CONTACT_SUCCESS'>('LANDING');
   
+  // Simple routing for success page
+  useEffect(() => {
+    const handleLocationChange = () => {
+      if (window.location.pathname === '/contato-sucesso') {
+        setView('CONTACT_SUCCESS');
+      }
+    };
+    
+    // Check initial path
+    handleLocationChange();
+    
+    window.addEventListener('popstate', handleLocationChange);
+    return () => window.removeEventListener('popstate', handleLocationChange);
+  }, []);
+
   // Data State
   const [cases, setCases] = useState<LegalCase[]>([]);
   const [users, setUsers] = useState<User[]>([]); 
@@ -1388,14 +1404,16 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
                                   </div>
 
                                   <div className="flex flex-col sm:flex-row items-center gap-4">
-                                    <a 
-                                      href={`https://wa.me/${SECRETARY_WHATSAPP.replace(/\D/g, '')}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
+                                    <button 
+                                      onClick={() => {
+                                        window.open(`https://wa.me/${SECRETARY_WHATSAPP.replace(/\D/g, '')}`, '_blank');
+                                        window.history.pushState({}, '', '/contato-sucesso');
+                                        setView('CONTACT_SUCCESS');
+                                      }}
                                       className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-xl font-bold flex items-center justify-center gap-3 transition-all shadow-lg shadow-green-600/20 hover:scale-[1.02]"
                                     >
                                       <Phone className="w-6 h-6" /> FALAR COM A SECRETÁRIA AGORA
-                                    </a>
+                                    </button>
                                     <p className="text-xs text-slate-500 dark:text-slate-400 max-w-[200px]">
                                       Clique no botão para iniciar seu atendimento e transformar sua análise em um processo real.
                                     </p>
