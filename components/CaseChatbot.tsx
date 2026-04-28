@@ -42,7 +42,7 @@ export const CaseChatbot: React.FC<CaseChatbotProps> = ({ activeCase, currentUse
   }, [messages]);
 
   const handleSendMessage = async (overrideMessage?: string) => {
-    const messageToSend = overrideMessage || input.trim();
+    const messageToSend = typeof overrideMessage === 'string' ? overrideMessage : input.trim();
     if (!messageToSend || isLoading) return;
 
     setInput('');

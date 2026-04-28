@@ -1750,16 +1750,6 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
                                 }))
                             ];
 
-                            if (allAppointments.length === 0 && activeCase.expertiseDate) {
-                              allAppointments.push({
-                                id: 'legacy',
-                                name: 'Perícia Agendada',
-                                date: activeCase.expertiseDate,
-                                time: '',
-                                type: 'LEGACY'
-                              });
-                            }
-
                             if (allAppointments.length === 0) {
                               return null;
                             }
