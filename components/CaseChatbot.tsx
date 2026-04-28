@@ -98,10 +98,12 @@ export const CaseChatbot: React.FC<CaseChatbotProps> = ({ activeCase, currentUse
         const response = await ai.models.generateContent({
           model: "gemini-3-flash-preview",
           contents: [
-            { role: 'user', parts: [{ text: systemInstruction }] },
             ...messages.map(m => ({ role: m.role, parts: [{ text: m.text }] })),
             { role: 'user', parts: [{ text: messageToSend }] }
           ],
+          config: {
+            systemInstruction: systemInstruction,
+          }
         });
         return response.text || "Desculpe, tive um problema. Tente novamente ou fale com nossa secretária.";
       });
