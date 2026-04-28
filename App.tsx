@@ -633,21 +633,40 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
       });
     } else {
       // Client
-      unsubUsers = onSnapshot(collection(db, 'profiles'), (snap) => {
-        const usersData = snap.docs.map(d => ({ id: d.id, ...d.data() })) as User[];
-        currentUsersRaw = usersData;
-        updateCases();
-      });
+      // 1. We ONLY need the current user's profile, which we already have in `currentUser`.
+      // The old code subscribed to ALL profiles, which is a massive data leak.
+      currentUsersRaw = [currentUser];
+      updateCases();
 
+      // 2. Fetch only cases belonging to the client
       const qCases = query(collection(db, 'cases'), where('clientId', '==', currentUser.id));
       unsubCases = onSnapshot(qCases, (snap) => {
         currentCasesRaw = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         updateCases();
-      });
 
-      unsubSteps = onSnapshot(collection(db, 'steps'), (snap) => {
-        currentStepsRaw = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        updateCases();
+        // 3. SECURELY fetch only steps for the cases this client owns!
+        const caseIds = currentCasesRaw.map(c => c.id);
+        
+        // Clean up previous steps subscription
+        if (unsubSteps) {
+          unsubSteps();
+          unsubSteps = undefined;
+        }
+
+        if (caseIds.length > 0) {
+          // Firestore 'in' has a max of 30, so we chunk it just in case
+          const chunk = caseIds.slice(0, 30);
+          const qSteps = query(collection(db, 'steps'), where('caseId', 'in', chunk));
+          unsubSteps = onSnapshot(qSteps, (stepsSnap) => {
+            currentStepsRaw = stepsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+            updateCases();
+          }, (err) => {
+             console.error("Erro ao ouvir steps do cliente:", err);
+          });
+        } else {
+          currentStepsRaw = [];
+          updateCases();
+        }
       });
     }
 
@@ -1633,84 +1652,6 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
                           </div>
                           
                           <div className="md:col-span-2 border-t border-slate-100 dark:border-slate-700 pt-4 mt-2">
-                            <div className="flex justify-between items-center mb-4">
-                              <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider block font-bold">Perícias Agendadas</label>
-                              <button 
-                                onClick={() => {
-                                  const newExpertise = { id: crypto.randomUUID(), name: '', date: '', time: '' };
-                                  setEditCaseDetails({
-                                    ...editCaseDetails,
-                                    expertises: [...(editCaseDetails.expertises || []), newExpertise]
-                                  });
-                                }}
-                                className="text-xs flex items-center gap-1 text-red-900 bg-red-50 hover:bg-red-100 px-2 py-1 rounded font-bold"
-                              >
-                                <Plus className="w-3 h-3" /> Adicionar Perícia
-                              </button>
-                            </div>
-                            
-                            <div className="space-y-4">
-                              {(editCaseDetails.expertises || []).map((exp, idx) => (
-                                <div key={exp.id} className="grid grid-cols-1 md:grid-cols-4 gap-3 p-3 bg-white dark:bg-slate-700 rounded border border-slate-200 dark:border-slate-600 relative group">
-                                  <div className="md:col-span-2">
-                                    <label className="text-[10px] text-slate-400 uppercase mb-1 block">Nome da Perícia (ex: Médica, Social)</label>
-                                    <input 
-                                      className="w-full border p-1.5 text-sm rounded dark:bg-slate-800 dark:text-white dark:border-slate-600"
-                                      value={exp.name}
-                                      onChange={e => {
-                                        const newList = [...(editCaseDetails.expertises || [])];
-                                        newList[idx].name = e.target.value;
-                                        setEditCaseDetails({...editCaseDetails, expertises: newList});
-                                      }}
-                                      placeholder="Ex: Perícia Médica"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="text-[10px] text-slate-400 uppercase mb-1 block">Data</label>
-                                    <input 
-                                      type="date"
-                                      className="w-full border p-1.5 text-sm rounded dark:bg-slate-800 dark:text-white dark:border-slate-600"
-                                      value={exp.date}
-                                      onChange={e => {
-                                        const newList = [...(editCaseDetails.expertises || [])];
-                                        newList[idx].date = e.target.value;
-                                        setEditCaseDetails({...editCaseDetails, expertises: newList});
-                                      }}
-                                    />
-                                  </div>
-                                  <div className="flex items-end gap-2">
-                                    <div className="flex-1">
-                                      <label className="text-[10px] text-slate-400 uppercase mb-1 block">Horário</label>
-                                      <input 
-                                        type="time"
-                                        className="w-full border p-1.5 text-sm rounded dark:bg-slate-800 dark:text-white dark:border-slate-600"
-                                        value={exp.time}
-                                        onChange={e => {
-                                          const newList = [...(editCaseDetails.expertises || [])];
-                                          newList[idx].time = e.target.value;
-                                          setEditCaseDetails({...editCaseDetails, expertises: newList});
-                                        }}
-                                      />
-                                    </div>
-                                    <button 
-                                      onClick={() => {
-                                        const newList = (editCaseDetails.expertises || []).filter((_, i) => i !== idx);
-                                        setEditCaseDetails({...editCaseDetails, expertises: newList});
-                                      }}
-                                      className="p-2 text-red-500 hover:bg-red-50 rounded"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                </div>
-                              ))}
-                              {(editCaseDetails.expertises || []).length === 0 && (
-                                <p className="text-xs text-slate-400 italic text-center py-2">Nenhuma perícia adicionada.</p>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="md:col-span-2 border-t border-slate-100 dark:border-slate-700 pt-4">
                             <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block font-bold">Orientações</label>
                             <textarea 
                               className="w-full border p-2 text-sm rounded dark:bg-slate-700 dark:text-white dark:border-slate-600 min-h-[100px]"
@@ -1738,7 +1679,6 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
                           
                           {(() => {
                             const allAppointments = [
-                              ...(activeCase.expertises || []).map(exp => ({ ...exp, type: 'EXPERTISE' })),
                               ...activeCase.steps
                                 .filter(s => s.appointmentDate)
                                 .map(s => ({ 

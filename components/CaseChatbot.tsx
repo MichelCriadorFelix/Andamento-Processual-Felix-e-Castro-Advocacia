@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { getGeminiClient, handleGeminiError } from '../lib/gemini';
+import { HarmCategory, HarmBlockThreshold } from '@google/genai';
 import { MessageCircle, Send, X, Bot, User as UserIcon, MessageSquare, Phone, Gavel } from 'lucide-react';
 import { LegalCase, User } from '../types';
 import Markdown from 'react-markdown';
@@ -98,11 +99,18 @@ export const CaseChatbot: React.FC<CaseChatbotProps> = ({ activeCase, currentUse
         const response = await ai.models.generateContent({
           model: "gemini-3-flash-preview",
           contents: [
-            ...messages.map(m => ({ role: m.role, parts: [{ text: m.text }] })),
+            // Safe filter out to ensure role strict alternation just in case of double clicks
+            ...messages.filter((m, i, arr) => i === 0 || m.role !== arr[i-1].role).map(m => ({ role: m.role, parts: [{ text: m.text }] })),
             { role: 'user', parts: [{ text: messageToSend }] }
           ],
           config: {
             systemInstruction: systemInstruction,
+            safetySettings: [
+              { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+              { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+              { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+              { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE }
+            ]
           }
         });
         return response.text || "Desculpe, tive um problema. Tente novamente ou fale com nossa secretária.";

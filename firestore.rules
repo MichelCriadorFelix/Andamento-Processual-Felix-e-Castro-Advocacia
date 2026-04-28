@@ -47,7 +47,7 @@ service cloud.firestore {
 
     // Rules
     match /profiles/{userId} {
-      allow read: if isAuthenticated();
+      allow read: if isAdmin() || isOwner(userId);
       allow create: if isOwner(userId) || isAdmin();
       allow update: if isOwner(userId) || isAdmin();
       allow delete: if isAdmin();
@@ -66,15 +66,13 @@ service cloud.firestore {
     }
 
     match /steps/{stepId} {
-      allow read: if isAdmin() || isAuthenticated();
+      allow read: if isAdmin() || (isAuthenticated() && exists(/databases/$(database)/documents/cases/$(resource.data.caseId)) && get(/databases/$(database)/documents/cases/$(resource.data.caseId)).data.clientId == request.auth.uid);
       allow create, update, delete: if isAdmin();
     }
 
     match /documents/{docId} {
-      // Allow read if admin or if the user is authenticated and the query filters by a caseId they own.
-      // Note: In queries, Firestore rules check if the rule is true for all possible results.
-      allow read: if isAdmin() || isAuthenticated(); 
-      allow create: if isAdmin() || (isAuthenticated() && exists(/databases/$(database)/documents/cases/$(request.resource.data.caseId)) && get(/databases/$(database)/documents/cases/$(request.resource.data.caseId)).data.clientId == request.auth.uid);
+      allow read: if isAdmin() || (isAuthenticated() && exists(/databases/$(database)/documents/cases/$(resource.data.caseId)) && get(/databases/$(database)/documents/cases/$(resource.data.caseId)).data.clientId == request.auth.uid); 
+      allow create: if (isAdmin() || (isAuthenticated() && exists(/databases/$(database)/documents/cases/$(request.resource.data.caseId)) && get(/databases/$(database)/documents/cases/$(request.resource.data.caseId)).data.clientId == request.auth.uid)) && isValidDocument(request.resource.data);
       allow update, delete: if isAdmin();
     }
 
