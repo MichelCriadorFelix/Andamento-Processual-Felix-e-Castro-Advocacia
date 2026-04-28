@@ -1205,11 +1205,11 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
                          <button onClick={() => setView('TEMPLATE_MANAGER')} className="hidden md:flex items-center space-x-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-sm font-semibold transition-all">
                            <Settings className="w-4 h-4" /><span>Modelos</span>
                          </button>
+                         <button onClick={() => setView('TEAM_MANAGER')} className="hidden md:flex items-center space-x-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-sm font-semibold transition-all">
+                           <Globe className="w-4 h-4" /><span>Equipe</span>
+                         </button>
                        </>
                     )}
-                    <button onClick={() => setView('TEAM_MANAGER')} className="hidden md:flex items-center space-x-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-sm font-semibold transition-all">
-                      <Globe className="w-4 h-4" /><span>Equipe</span>
-                    </button>
                     <button onClick={handleLogout} className="flex items-center space-x-2 px-4 py-2 bg-bordo-900 hover:bg-bordo-950 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-bordo-900/20"><LogOut className="w-4 h-4" /><span className="hidden md:inline">Sair</span></button>
                   </div>
                 </div>
@@ -1736,58 +1736,56 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
                             <p className="font-medium text-slate-800 dark:text-slate-200">{activeCase.caseNumber || 'Não informado'}</p>
                           </div>
                           
-                          <div className="md:col-span-2">
-                            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Perícias e Audiências Agendadas</p>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              {(() => {
-                                const allAppointments = [
-                                  ...(activeCase.expertises || []).map(exp => ({ ...exp, type: 'EXPERTISE' })),
-                                  ...activeCase.steps
-                                    .filter(s => s.appointmentDate)
-                                    .map(s => ({ 
-                                      id: s.id, 
-                                      name: s.label, 
-                                      date: s.appointmentDate!, 
-                                      time: '',
-                                      type: 'STEP'
-                                    }))
-                                ];
+                          {(() => {
+                            const allAppointments = [
+                              ...(activeCase.expertises || []).map(exp => ({ ...exp, type: 'EXPERTISE' })),
+                              ...activeCase.steps
+                                .filter(s => s.appointmentDate)
+                                .map(s => ({ 
+                                  id: s.id, 
+                                  name: s.label, 
+                                  date: s.appointmentDate!, 
+                                  time: '',
+                                  type: 'STEP'
+                                }))
+                            ];
 
-                                if (allAppointments.length === 0 && activeCase.expertiseDate) {
-                                  allAppointments.push({
-                                    id: 'legacy',
-                                    name: 'Perícia Agendada',
-                                    date: activeCase.expertiseDate,
-                                    time: '',
-                                    type: 'LEGACY'
-                                  });
-                                }
+                            if (allAppointments.length === 0 && activeCase.expertiseDate) {
+                              allAppointments.push({
+                                id: 'legacy',
+                                name: 'Perícia Agendada',
+                                date: activeCase.expertiseDate,
+                                time: '',
+                                type: 'LEGACY'
+                              });
+                            }
 
-                                if (allAppointments.length === 0) {
-                                  return (
-                                    <div className="md:col-span-2 py-4 text-center border border-dashed border-slate-200 dark:border-slate-700 rounded">
-                                      <p className="text-xs text-slate-400 italic">Nenhuma perícia ou audiência agendada.</p>
-                                    </div>
-                                  );
-                                }
+                            if (allAppointments.length === 0) {
+                              return null;
+                            }
 
-                                return allAppointments.map((app) => (
-                                  <div key={app.id} className="bg-white dark:bg-slate-700/50 p-3 rounded border border-slate-100 dark:border-slate-700 flex justify-between items-center">
-                                    <div>
-                                      <p className="text-xs font-bold text-red-900 dark:text-red-400 uppercase tracking-tight">{app.name || 'Agendamento'}</p>
-                                      <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
-                                        {new Date(app.date + 'T00:00:00').toLocaleDateString('pt-BR')}
-                                        {app.time && ` às ${app.time}`}
-                                      </p>
+                            return (
+                              <div className="md:col-span-2">
+                                <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Perícias e Audiências Agendadas</p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  {allAppointments.map((app) => (
+                                    <div key={app.id} className="bg-white dark:bg-slate-700/50 p-3 rounded border border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                                      <div>
+                                        <p className="text-xs font-bold text-red-900 dark:text-red-400 uppercase tracking-tight">{app.name || 'Agendamento'}</p>
+                                        <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                                          {new Date(app.date + 'T00:00:00').toLocaleDateString('pt-BR')}
+                                          {app.time && ` às ${app.time}`}
+                                        </p>
+                                      </div>
+                                      <div className="bg-red-50 dark:bg-red-900/20 p-2 rounded-full">
+                                        <FileText className="w-4 h-4 text-red-900 dark:text-red-400" />
+                                      </div>
                                     </div>
-                                    <div className="bg-red-50 dark:bg-red-900/20 p-2 rounded-full">
-                                      <FileText className="w-4 h-4 text-red-900 dark:text-red-400" />
-                                    </div>
-                                  </div>
-                                ));
-                              })()}
-                            </div>
-                          </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })()}
 
                           <div className="md:col-span-2">
                             <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Orientações</p>
